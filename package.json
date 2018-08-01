@@ -1,0 +1,10 @@
+{
+  "name": "picpic-core",
+  "version": "0.0.0",
+  "description": "Automatically select images for news articles",
+  "main": "main.js",
+  "repository": "https://github.com/mgschoen/picpic-core.git",
+  "author": "Martin Schoen <schoenm@cip.ifi.lmu.de>",
+  "license": "MIT",
+  "private": false
+}
