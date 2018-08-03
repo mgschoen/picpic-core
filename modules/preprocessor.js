@@ -1,11 +1,15 @@
 const Natural = require('natural')
+const WordPOS = require('wordpos')
+
+WordPOS.defaults = { stopwords: false }
 
 const Tokenizer = new Natural.WordTokenizer()
 const Stopwords = Natural.stopwords
 const NGrams = Natural.NGrams
+const Wordpos = new WordPOS()
 
-function concatStrings (paragraphs) {
-    return paragraphs.reduce((acc, cur) => 
+function concatStrings (strings) {
+    return strings.reduce((acc, cur) => 
         acc.length === 0 ? cur : `${acc} ${cur}`, '')
 }
 
@@ -60,6 +64,33 @@ function assignParagraphTypes (paragraphs) {
     return allTerms
 }
 
+async function assignPOS (terms) {
+
+    function posRequestLoop (terms, keys, index, callback) {
+        let key = keys[index]
+        Wordpos.getPOS(terms[key].originalTerm).then(pos => {
+            terms[key].pos = pos
+            if (index < keys.length - 1) {
+                posRequestLoop(terms, keys, index + 1, callback)
+            } else {
+                callback(null, terms)
+            }
+        }).catch(error => {
+            callback(error)
+        })
+    }
+
+    return new Promise((resolve, reject) => {
+        posRequestLoop(terms, Object.keys(terms), 0, (err, terms) => {
+            if (err) {
+                reject(err)
+                return
+            }
+            resolve()
+        })
+    })
+}
+
 let Preprocessor = function (paragraphs) {
     this.originalParagraphs = paragraphs
     this.fullText = null
@@ -69,9 +100,19 @@ let Preprocessor = function (paragraphs) {
 }
 
 Preprocessor.prototype.preprocess = function () {
-    this.fullText = generateFullText(this.originalParagraphs)
-    this.fullTextStemmed = stemPlainText(this.fullText)
-    this.allTerms = assignParagraphTypes(this.originalParagraphs)
+    return new Promise(async (resolve, reject) => {
+
+        try {
+            this.fullText = generateFullText(this.originalParagraphs)
+            this.fullTextStemmed = stemPlainText(this.fullText)
+            this.allTerms = assignParagraphTypes(this.originalParagraphs)
+            await assignPOS(this.allTerms)
+            resolve()
+        } catch (error) {
+            reject(error)
+        }
+
+    })
 }
 
 module.exports = Preprocessor

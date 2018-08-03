@@ -13,6 +13,7 @@
   "private": false,
   "dependencies": {
     "natural": "^0.6.1",
-    "node-rest-client": "^3.1.0"
+    "node-rest-client": "^3.1.0",
+    "wordpos": "^1.1.6"
   }
 }
