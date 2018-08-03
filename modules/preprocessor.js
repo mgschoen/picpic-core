@@ -8,6 +8,9 @@ const Stopwords = Natural.stopwords
 const NGrams = Natural.NGrams
 const Wordpos = new WordPOS()
 
+const nonWordChars = '[^A-Za-zА-Яа-я0-9_]+'
+const nonWordNonPunctuationChars = '[^A-Za-zА-Яа-я0-9_,\\.\\!\\?\\:]+'
+
 function concatStrings (strings) {
     return strings.reduce((acc, cur) => 
         acc.length === 0 ? cur : `${acc} ${cur}`, '')
@@ -28,7 +31,17 @@ function stemPlainText (plainText) {
     return concatStrings(stemmedTokens)
 }
 
-function getNGrams (tokens, minLength, maxLength) {
+function constructSearchRegex (term, wordSeparator, termBorder) {
+    let borderSeparator = termBorder || wordSeparator
+    let searchTerm = term.replace(/ /g, wordSeparator)
+    return new RegExp(
+        '(^'  + searchTerm + borderSeparator + '|' + 
+        borderSeparator + searchTerm + borderSeparator + '|' + 
+        borderSeparator + searchTerm + '$)', 'g'
+    )
+}
+
+function getNGrams (tokens, fullText, minLength, maxLength) {
     let allNGrams = []
     for (let i = minLength; i <= maxLength; i++) {
         allNGrams = [ ...allNGrams, ...NGrams.ngrams(tokens, i) ]
@@ -38,17 +51,21 @@ function getNGrams (tokens, minLength, maxLength) {
         if (Stopwords.indexOf(first) >= 0 || Stopwords.indexOf(last) >= 0) {
             return false
         }
+        let regex = constructSearchRegex(concatStrings(ngram), nonWordNonPunctuationChars, nonWordChars)
+        if (fullText.search(regex) < 0) {
+            return false
+        }
         return true
     })
     let concatenatedNGrams = allowedNGrams.map(ngram => concatStrings(ngram))
     return concatenatedNGrams
 }
 
-function assignParagraphTypes (paragraphs) {
+function assignParagraphTypes (paragraphs, fullText) {
     let allTerms = {}
     for (let p of paragraphs) {
         let tokens = Tokenizer.tokenize(p.content)
-        let ngrams = getNGrams(tokens, 2, 4)
+        let ngrams = getNGrams(tokens, fullText, 2, 4)
         let terms = [...tokens, ...ngrams]
         for (let term of terms) {
             if (allTerms[term]) {
@@ -91,6 +108,19 @@ async function assignPOS (terms) {
     })
 }
 
+function assignFirstOccurrences (terms, fullText) {
+    for (let term in terms) {
+        let searchRegex = constructSearchRegex(term, nonWordChars)
+        let foIndex = fullText.search(searchRegex)
+        let maxIndex = fullText.length
+        let foRelative = foIndex / maxIndex
+        if (foRelative < 0) {
+            console.log(`${term}: ${foIndex} - ${searchRegex}`)
+        }
+        terms[term].firstOccurrence = foRelative
+    }
+}
+
 let Preprocessor = function (paragraphs) {
     this.originalParagraphs = paragraphs
     this.fullText = null
@@ -105,8 +135,9 @@ Preprocessor.prototype.preprocess = function () {
         try {
             this.fullText = generateFullText(this.originalParagraphs)
             this.fullTextStemmed = stemPlainText(this.fullText)
-            this.allTerms = assignParagraphTypes(this.originalParagraphs)
+            this.allTerms = assignParagraphTypes(this.originalParagraphs, this.fullText)
             await assignPOS(this.allTerms)
+            assignFirstOccurrences(this.allTerms, this.fullText)
             resolve()
         } catch (error) {
             reject(error)

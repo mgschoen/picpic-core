@@ -8,7 +8,7 @@ const rest = new RestClient()
 const Preprocessor = require('../modules/preprocessor')
 
 // Script
-rest.get('http://picpic-api.argonn.me/article/412', async (data, response) => {
+rest.get('http://picpic-api.argonn.me/article/1464', async (data, response) => {
     
     let paragraphs = data.article.paragraphs
     paragraphs.unshift({
