@@ -4,6 +4,7 @@
   "description": "Automatically select images for news articles",
   "main": "main.js",
   "scripts": {
+    "train": "node ./scripts/train.js",
     "stat": "node ./scripts/stat.js",
     "ml": "node ./scripts/ml.js"
   },
@@ -12,8 +13,15 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
+    "boxen": "^1.3.0",
+    "cli-graph": "^3.2.2",
+    "cli-table": "^0.3.1",
+    "clui": "^0.3.6",
+    "mathjs": "^5.0.4",
+    "minimist": "^1.2.0",
     "natural": "^0.6.1",
     "node-rest-client": "^3.1.0",
+    "wordnet-db": "^3.1.6",
     "wordpos": "^1.1.6"
   }
 }

@@ -1,5 +1,7 @@
-const Preprocessor = require('./modules/preprocessor')
+const ArticlePreprocessor = require('./modules/preprocessor/pp-article')
+const KeywordsPreprocessor = require('./modules/preprocessor/pp-keywords')
+const Matcher = require('./modules/training/matcher')
 
 module.exports = {
-    Preprocessor
+    ArticlePreprocessor, KeywordsPreprocessor, Matcher
 }

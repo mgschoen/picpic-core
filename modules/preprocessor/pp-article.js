@@ -3,68 +3,26 @@ const WordPOS = require('wordpos')
 
 WordPOS.defaults = { stopwords: false }
 
-const Tokenizer = new Natural.WordTokenizer()
-const Stopwords = Natural.stopwords
-const NGrams = Natural.NGrams
 const Wordpos = new WordPOS()
 
-const nonWordChars = '[^A-Za-zА-Яа-я0-9_]+'
-const nonWordNonPunctuationChars = '[^A-Za-zА-Яа-я0-9_,\\.\\!\\?\\:]+'
-
-function concatStrings (strings) {
-    return strings.reduce((acc, cur) => 
-        acc.length === 0 ? cur : `${acc} ${cur}`, '')
-}
+const { 
+    concatStrings, 
+    stemPlainText,
+    tokenizePlainText,
+    getNGrams,
+    constructSearchRegex,
+    nonWordChars
+ } = require('../util')
 
 function generateFullText (paragraphs) {
     let contents = paragraphs.map(p => p.content)
     return concatStrings(contents)
 }
 
-function tokenizePlainText (plainText) {
-    return Tokenizer.tokenize(plainText)
-}
-
-function stemPlainText (plainText) {
-    let tokens = tokenizePlainText(plainText)
-    let stemmedTokens = tokens.map(token => Natural.PorterStemmer.stem(token))
-    return concatStrings(stemmedTokens)
-}
-
-function constructSearchRegex (term, wordSeparator, termBorder) {
-    let borderSeparator = termBorder || wordSeparator
-    let searchTerm = term.replace(/ /g, wordSeparator)
-    return new RegExp(
-        '(^'  + searchTerm + borderSeparator + '|' + 
-        borderSeparator + searchTerm + borderSeparator + '|' + 
-        borderSeparator + searchTerm + '$)', 'g'
-    )
-}
-
-function getNGrams (tokens, fullText, minLength, maxLength) {
-    let allNGrams = []
-    for (let i = minLength; i <= maxLength; i++) {
-        allNGrams = [ ...allNGrams, ...NGrams.ngrams(tokens, i) ]
-    }
-    let allowedNGrams = allNGrams.filter(ngram => {
-        let first = ngram[0], last = ngram[ngram.length - 1]
-        if (Stopwords.indexOf(first) >= 0 || Stopwords.indexOf(last) >= 0) {
-            return false
-        }
-        let regex = constructSearchRegex(concatStrings(ngram), nonWordNonPunctuationChars, nonWordChars)
-        if (fullText.search(regex) < 0) {
-            return false
-        }
-        return true
-    })
-    let concatenatedNGrams = allowedNGrams.map(ngram => concatStrings(ngram))
-    return concatenatedNGrams
-}
-
 function assignParagraphTypes (paragraphs, fullText) {
     let allTerms = {}
     for (let p of paragraphs) {
-        let tokens = Tokenizer.tokenize(p.content)
+        let tokens = tokenizePlainText(p.content)
         let ngrams = getNGrams(tokens, fullText, 2, 4)
         let terms = [...tokens, ...ngrams]
         for (let term of terms) {
@@ -121,12 +79,55 @@ function assignFirstOccurrences (terms, fullText) {
     }
 }
 
+function mergePOS (stemmedPOS, plainPOS) {
+    let mergedPOS = { nouns:[], verbs:[], adjectives:[], adverbs:[], rest:[] }
+    for (let posTag in mergedPOS) {
+        if (stemmedPOS) {
+            mergedPOS[posTag] = [...stemmedPOS[posTag]]
+        }
+        let newWords = plainPOS[posTag]
+        for (let word of newWords) {
+            let stemmedWord = stemPlainText(word)
+            if (mergedPOS[posTag].indexOf(stemmedWord) < 0) {
+                mergedPOS[posTag].push(stemmedWord)
+            }
+        }
+    }
+    return mergedPOS
+}
+
+function stemAndCombine (terms) {
+    let combinedTerms = {}
+    for (let term in terms) {
+        let stemmedTerm = stemPlainText(term)
+        let original = terms[term]
+        let combined = combinedTerms[stemmedTerm]
+        if (combined) {
+            combined.originalTerms.push(term)
+            combined.containingElements = 
+                [...combined.containingElements, ...original.containingElements]
+            combined.pos = mergePOS(combined.pos, original.pos)
+            combined.firstOccurrence = Math.min(combined.firstOccurrence, original.firstOccurrence)
+            combined.termFrequency += original.containingElements.length
+        } else {
+            combinedTerms[stemmedTerm] = {
+                originalTerms: [term],
+                containingElements: original.containingElements,
+                pos: mergePOS(null, original.pos),
+                firstOccurrence: original.firstOccurrence,
+                termFrequency: original.containingElements.length
+            }
+        }
+    }
+    return combinedTerms
+}
+
 let Preprocessor = function (paragraphs) {
     this.originalParagraphs = paragraphs
     this.fullText = null
     this.fullTextStemmed = null
     this.allTerms = null
-    this.stemmedUniqueTerms = {}
+    this.stemmedUniqueTerms = null
 }
 
 Preprocessor.prototype.preprocess = function () {
@@ -138,12 +139,38 @@ Preprocessor.prototype.preprocess = function () {
             this.allTerms = assignParagraphTypes(this.originalParagraphs, this.fullText)
             await assignPOS(this.allTerms)
             assignFirstOccurrences(this.allTerms, this.fullText)
+            this.stemmedUniqueTerms = stemAndCombine(this.allTerms)
             resolve()
         } catch (error) {
             reject(error)
         }
 
     })
+}
+
+Preprocessor.prototype.getStemmedTerms = function (sortFunction) {
+    if (this.stemmedUniqueTerms) {
+        let terms = []
+        for (let term in this.stemmedUniqueTerms) {
+            let entry = this.stemmedUniqueTerms[term]
+            entry.stemmedTerm = term
+            terms.push(entry)
+        }
+        if (sortFunction) {
+            return terms.sort(sortFunction)
+        }
+        return terms
+    } else {
+        return []
+    }
+}
+
+Preprocessor.prototype.setKeyword = function (term) {
+    if (this.stemmedUniqueTerms[term]) {
+        this.stemmedUniqueTerms[term].isKeyword = true
+        return true
+    }
+    return false
 }
 
 module.exports = Preprocessor
