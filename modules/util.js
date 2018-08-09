@@ -2,7 +2,7 @@ const Natural = require('natural')
 const NGrams = Natural.NGrams
 const Tokenizer = new Natural.WordTokenizer()
 
-const Stopwords = Natural.stopwords
+const Stopwords = [...Natural.stopwords, 'she', 'new']
 const nonWordChars = '[^A-Za-zА-Яа-я0-9_]+'
 const nonWordNonPunctuationChars = '[^A-Za-zА-Яа-я0-9_,\\.\\!\\?\\:]+'
 

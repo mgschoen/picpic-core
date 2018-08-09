@@ -6,9 +6,16 @@ const { BOXEN_OPTIONS } = require('./print.config')
 const ValueList = function (title, values, options) {
     this.title = title
     this.values = values
-    this.style = {
-        keyWidth: options.keyWidth,
-        key: options.keyStyles
+    if (options) {
+        this.style = {
+            keyWidth: options.keyWidth || 20,
+            key: options.keyStyles || []
+        }
+    } else {
+        this.style = {
+            keyWidth: 30,
+            key: []
+        }
     }
 }
 
