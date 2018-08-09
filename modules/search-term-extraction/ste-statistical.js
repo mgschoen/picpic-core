@@ -51,7 +51,7 @@ function largestParent (arrayOfStrings, string, includeIdentical) {
  * 4. If both selected terms can be integrated in the same superterm, the next 
  * best appropriate term is considered, and so on...
  * 5. If the combination of the selected terms contains more than 3 words, 
- * discard the second term.
+ * discard the shorter term.
  * 6. Return the selected term(s) concatenated.
  * 
  * @param {object[]} probabilities list of terms and their associated probabilities of being
@@ -59,9 +59,11 @@ function largestParent (arrayOfStrings, string, includeIdentical) {
  * @param {number} threshold minimum probability for terms to be considered
  */
 function generateSearchRequest (probabilities, threshold) {
+    // 1. Get appropriate terms
     let keywords = getTermsWithThreshold(probabilities, threshold, true)
     let mergedKeywords = []
 
+    // 3. + 4. Discard all subterms and put all superterms at the position of their first subterm
     for (let i = 0; i < keywords.length; i++) {
         let current = keywords[i]
         let { stemmedTerm } = current
@@ -79,11 +81,22 @@ function generateSearchRequest (probabilities, threshold) {
         }
     }
 
+    // 2. Select the two query terms
     let requestKeywords = mergedKeywords.slice(0, 2)
     let keywordsString = concatStrings(requestKeywords.map(kw => kw.originalTerms[0]), ' ')
-    let requestString = keywordsString.split(' ').length > 3 
-        ? requestKeywords[0].originalTerms[0] 
-        : keywordsString
+    let requestString = keywordsString
+    // 5. Shorten the query if neccessary
+    if (keywordsString.split(' ').length > 3) {
+        let firstLength = requestKeywords[0] ? requestKeywords[0].originalTerms[0].split(' ').length : 0
+        let secondLength = requestKeywords[1] ? requestKeywords[1].originalTerms[0].split(' ').length : 0
+        let diff = firstLength - secondLength
+        if (diff < 0) {
+            requestString = requestKeywords[1].originalTerms[0]
+        } else if (diff > 0 || (diff == 0 && requestKeywords[0])) {
+            requestString = requestKeywords[0].originalTerms[0]
+        }
+    }
+    // 6. Phew.
     return requestString.toLowerCase()
 }
 
