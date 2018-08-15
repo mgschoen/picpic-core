@@ -7,7 +7,7 @@
     "generate": "node ./scripts/generate-training-data.js",
     "ml": "node ./scripts/ml.js",
     "stat": "node ./scripts/stat.js",
-    "train": "node ./scripts/train.js"
+    "inspect": "node ./scripts/inspect.js"
   },
   "repository": "https://github.com/mgschoen/picpic-core.git",
   "author": "Martin Schoen <schoenm@cip.ifi.lmu.de>",
