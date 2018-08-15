@@ -3,7 +3,6 @@ const fs = require('fs')
 const Minimist = require('minimist')
 const Loki = require('lokijs')
 const lfsa = require('../node_modules/lokijs/src/loki-fs-structured-adapter')
-const JSONFile = require('jsonfile')
 
 // Modules
 const ArticlePreprocessor = require('../modules/preprocessor/pp-article')
@@ -28,6 +27,13 @@ function terminate (errorMessage, exitCode) {
     process.exit(exitCode)
 }
 
+/**
+ * Concatenates a list of values to a string with
+ * a specified separator string between the values
+ * @param {array} values 
+ * @param {string} separator 
+ * @returns {string}
+ */
 function stringFromList (values, separator) {
     let string = ''
     let num = values.length
@@ -42,6 +48,18 @@ function stringFromList (values, separator) {
     return string
 }
 
+/**
+ * Counts how many times each distinct element is
+ * contained in an array. Returns the results as 
+ * an object.
+ * 
+ * E.g. the array 
+ *   [ 'apple', 'strawberry', 'apple', 'apple', 'potato', 'strawberry' ]
+ * would return 
+ *   { 'apple': 3, 'potato': 1, 'strawberry': 2  }
+ * @param {array} array 
+ * @return {object}
+ */
 function countArrayElements (array) {
     let count = {}
     for (let elem of array) {
