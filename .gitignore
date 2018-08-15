@@ -62,3 +62,6 @@ typings/
 
 # VS Code settings
 .vscode
+
+# Data exported by scripts of this package
+data/
