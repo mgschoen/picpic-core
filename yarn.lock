@@ -279,6 +279,10 @@ jsonify@~0.0.0:
   version "0.0.0"
   resolved "https://registry.yarnpkg.com/jsonify/-/jsonify-0.0.0.tgz#2c74b6ee41d93ca51b7b5aaee8f503631d252a73"
 
+libsvm-js@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/libsvm-js/-/libsvm-js-0.2.1.tgz#607a0b073fb0a635546ca5b93b7205282051a877"
+
 lokijs@^1.5.5:
   version "1.5.5"
   resolved "https://registry.yarnpkg.com/lokijs/-/lokijs-1.5.5.tgz#1c21f82af7579037fade7b9e4813485c23708bb6"
@@ -355,6 +359,10 @@ ms@0.7.1:
 ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
+
+n-readlines@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/n-readlines/-/n-readlines-1.0.0.tgz#c353797f216c253fdfef7e91da4e8b17c29a91a6"
 
 natural@^0.6.1:
   version "0.6.1"

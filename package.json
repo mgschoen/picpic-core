@@ -5,9 +5,10 @@
   "main": "main.js",
   "scripts": {
     "generate": "node ./scripts/generate-training-data.js",
+    "inspect": "node ./scripts/inspect.js",
     "ml": "node ./scripts/ml.js",
     "stat": "node ./scripts/stat.js",
-    "inspect": "node ./scripts/inspect.js"
+    "train": "node ./scripts/train.js"
   },
   "repository": "https://github.com/mgschoen/picpic-core.git",
   "author": "Martin Schoen <schoenm@cip.ifi.lmu.de>",
@@ -19,9 +20,11 @@
     "cli-graph": "^3.2.2",
     "cli-table": "^0.3.1",
     "clui": "^0.3.6",
+    "libsvm-js": "^0.2.1",
     "lokijs": "^1.5.5",
     "mathjs": "^5.0.4",
     "minimist": "^1.2.0",
+    "n-readlines": "^1.0.0",
     "natural": "^0.6.1",
     "node-rest-client": "^3.1.0",
     "wordnet-db": "^3.1.6",

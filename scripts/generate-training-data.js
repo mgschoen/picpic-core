@@ -13,19 +13,12 @@ const Matcher = require('../modules/training/matcher')
 const APP_ROOT = require('app-root-path')
 const STORAGE_REQUIRED_COLLECTIONS = [ 'articles', 'keywords' ]
 const d = new Date()
-const EXPORT_FILENAME = `training.${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-`+
-    `${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}.csv`
+const dateString = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-`+
+    `${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}`
+const EXPORT_FILENAME_TRAINING = `training.${dateString}.csv`
+const EXPORT_FILENAME_TEST = `test.${dateString}.csv`
 
-/**
- * Log an error message and gracefully terminate the process
- * with the specified exit code
- * @param {string} errorMessage 
- * @param {number} exitCode 
- */
-function terminate (errorMessage, exitCode) {
-    console.error(errorMessage)
-    process.exit(exitCode)
-}
+const { terminate } = require('./script-util')
 
 /**
  * Concatenates a list of values to a string with
@@ -74,7 +67,9 @@ function countArrayElements (array) {
 
 // stemmedTerm,originalTerms,termFrequency,firstOccurrence,numH1,numH2,numP,numLi,numOther,...
 // ...numPosNoun,numPosVerb,numPosAdj,numPosAdv,numPosRest,isKeyword
-function termToCSV (kw) {
+function termToCSV (kw, options) {
+
+    // preprocess
     let countContainingElements = countArrayElements(kw.containingElements)
     let knownContainingElements = [ 'H1', 'H2', 'P', 'LI' ]
     let numH1 = countContainingElements.H1 || 0
@@ -88,11 +83,19 @@ function termToCSV (kw) {
         }
     }
     let isKeyword = kw.isKeyword ? '1' : '0'
-    return `${kw.stemmedTerm},${stringFromList(kw.originalTerms, '|')},` +
-        `${kw.termFrequency},${kw.firstOccurrence},${numH1},${numH2},${numP},${numLi},` +
-        `${numOther},${kw.pos.nouns.length},${kw.pos.verbs.length},` + 
-        `${kw.pos.adjectives.length},${kw.pos.adverbs.length},${kw.pos.rest.length},` +
-        `${isKeyword}\n`
+
+    // construct string
+    let csvString = `${kw.stemmedTerm},${stringFromList(kw.originalTerms, '|')},` +
+        `${kw.termFrequency},${kw.firstOccurrence},`
+    if (options.withPtype) {
+        csvString += `${numH1},${numH2},${numP},${numLi},${numOther},`
+    }
+    if (options.withPOS) {
+        csvString += `${kw.pos.nouns.length},${kw.pos.verbs.length},` +
+        `${kw.pos.adjectives.length},${kw.pos.adverbs.length},${kw.pos.rest.length},`     
+    }
+    csvString += `${isKeyword}\n`
+    return csvString
 }
 
 // Read additional config from command line
@@ -105,6 +108,8 @@ let exportPath = argv['e'] || argv['export-path'] || `${APP_ROOT}/data/`
 if (exportPath[exportPath.length - 1] !== '/') {
     exportPath += '/'
 }
+let includePOS = argv['pos'] || false
+let includePtype = argv['ptype'] || false
 
 console.log()
 console.log(`Reading data from file ${storageFilePath} ...`)
@@ -140,7 +145,7 @@ db.loadDatabase({}, async err => {
     let articles = articlesCollection.find({gettyMeta: true})
 
     // Start processing
-    console.log(`Writing to file ${exportPath}${EXPORT_FILENAME} ...`)
+    console.log(`Writing to file ${exportPath}${EXPORT_FILENAME_TRAINING} ...`)
     let termsTotal = 0
     for (let dbEntry of articles) {
         let article = {...dbEntry}
@@ -166,14 +171,21 @@ db.loadDatabase({}, async err => {
         let flaggedTerms = articlePreprocessor.getStemmedTerms()
         termsTotal += flaggedTerms.length
         console.log(`${article.$loki} - ${article.url} - ${flaggedTerms.filter(term => term.isKeyword).length} keywords`)
-        let csv = ''
-        for (let term of flaggedTerms) {
-            csv += termToCSV(term)
+        let trainingCsv = ''
+        let testCsv = ''
+        for (let index in flaggedTerms) {
+            let term = flaggedTerms[index]
+            if (index % 10 === 0) {
+                testCsv += termToCSV(term, {withPOS: includePOS, withPtype: includePtype})
+            } else {
+                trainingCsv += termToCSV(term, {withPOS: includePOS, withPtype: includePtype})
+            }
         }
 
         // Write CSV to file
         try {
-            fs.appendFileSync(exportPath + EXPORT_FILENAME, csv)
+            fs.appendFileSync(exportPath + EXPORT_FILENAME_TRAINING, trainingCsv)
+            fs.appendFileSync(exportPath + EXPORT_FILENAME_TEST, testCsv)
         } catch (error) {
             terminate(error.message, 1)
         }
