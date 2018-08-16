@@ -55,13 +55,16 @@ function getNextNLines (lineReader, n) {
 let argv = Minimist(process.argv.slice(2))
 let trainingDataPath = argv['t'] || argv['training-data']
 let modelType = argv['m'] || argv['model'] || 'svm'
-let outputPath = argv['m'] || argv['output'] || OUTPUT_PATH_DEFAULT
+let outputPath = argv['o'] || argv['output'] || OUTPUT_PATH_DEFAULT
 if (!trainingDataPath) {
     console.log(USAGE_STRING)
     terminate('No path to training data specified', 9)
 }
 if (VALID_MODEL_TYPES.indexOf(modelType) < 0) {
     terminate(`Model type ${modelType} is not valid`, 9)
+}
+if (outputPath[outputPath.length-1] !== '/') {
+    outputPath += '/'
 }
 
 // Initialize classifier
@@ -120,6 +123,7 @@ let predictionsCorrect = predictions.filter((p, i) => {
 })
 let predictionRate = predictionsCorrect.length / predictions.length
 
+// Print evaluation
 console.log()
 console.log(`Rate of correct predictions: ${100 * predictionRate} %`)
 console.log(`Correctly predicted regular terms: ${100 * regularTermsCorrect/regularTermsTotal} %` +
@@ -128,4 +132,12 @@ console.log(`Correctly predicted keywords: ${100 * keywordsCorrect/keywordsTotal
     ` (${keywordsCorrect}/${keywordsTotal})`)
 let predictedKeywords = predictions.filter(p => p === 1).length
 console.log(`Of all predicted keywords, ${100 * keywordsCorrect/predictedKeywords} % (${keywordsCorrect}/${predictedKeywords}) were actually keywords`)
+console.log()
+
+// Save the serialized trained model
+let serializedModel = classifier.serialize()
+let outputFileName = `${modelType}.${new Date().getTime()}.model`
+console.log(`Storing model at ${outputPath}${outputFileName} ...`)
+fs.writeFileSync(outputPath + outputFileName, serializedModel)
+console.log('Done.')
 console.log()

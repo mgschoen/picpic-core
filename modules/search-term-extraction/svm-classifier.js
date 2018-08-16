@@ -39,4 +39,8 @@ SVMClassifier.prototype.predict = function (features) {
     return this.model.predict(features)
 }
 
+SVMClassifier.prototype.serialize = function () {
+    return this.model.serializeModel()
+}
+
 module.exports = SVMClassifier
