@@ -30,7 +30,6 @@ SVMClassifier.prototype.train = function (features, labels) {
     let trainingLabels = [...keywordLabels, ...regularTermsLabels]
     console.log(`Training SVM model with ${trainingFeatures.length} terms ...`)
     console.log(`Training set includes ${trainingLabels.filter(l => l === 1).length} keywords`)
-    //let validation = this.model.crossValidation(featureSubset, labelsSubset, 10)
     this.model.train(trainingFeatures, trainingLabels)
 }
 
@@ -41,6 +40,15 @@ SVMClassifier.prototype.predict = function (features) {
 
 SVMClassifier.prototype.serialize = function () {
     return this.model.serializeModel()
+}
+
+SVMClassifier.prototype.loadFromString = function (string) {
+    let loadedSVM = SVM.load(string)
+    if (loadedSVM.model) {
+        this.model = loadedSVM
+        return true
+    }
+    return false
 }
 
 module.exports = SVMClassifier

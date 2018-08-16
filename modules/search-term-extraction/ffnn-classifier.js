@@ -114,4 +114,16 @@ FastForwardNNClassifier.prototype.serialize = function () {
     return JSON.stringify(this.model.toJSON())
 }
 
+FastForwardNNClassifier.prototype.loadFromString = function (string) {
+    try {
+        let config = JSON.parse(string)
+        this.model.fromJSON(config)
+        console.log('FastForwardNN loaded succcessfully')
+        return true
+    } catch (error) {
+        console.warn(`Failed to load FastForwardNN from string: ${error.message}`)
+        return false
+    }
+} 
+
 module.exports = FastForwardNNClassifier

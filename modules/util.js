@@ -33,6 +33,25 @@ function constructSearchRegex (term, wordSeparator, termBorder) {
     )
 }
 
+function getNextNLines (lineReader, n) {
+    let numLines = 0,
+        lineBuffer = null,
+        features = [],
+        labels = []
+    while ((lineBuffer = lineReader.next()) && numLines < n) {
+        let line = lineBuffer.toString('ascii')
+        let values = line.split(',').slice(2).map(v => parseFloat(v))
+        let label = values.pop()
+        features.push(values)
+        labels.push(label)
+        numLines++
+    }
+    if (numLines === 0) {
+        return null
+    }
+    return { numLines, features, labels }
+}
+
 function getNGrams (tokens, fullText, minLength, maxLength) {
     let allNGrams = []
     for (let i = minLength; i <= maxLength; i++) {
@@ -93,6 +112,7 @@ module.exports = {
     arrayToObject,
     concatStrings,
     constructSearchRegex,
+    getNextNLines,
     getNGrams,
     isStopword,
     objectToArray,

@@ -4,6 +4,7 @@
   "description": "Automatically select images for news articles",
   "main": "main.js",
   "scripts": {
+    "benchmark": "node ./scripts/run-benchmark.js",
     "generate": "node ./scripts/generate-training-data.js",
     "inspect": "node ./scripts/inspect.js",
     "ml": "node ./scripts/ml.js",
