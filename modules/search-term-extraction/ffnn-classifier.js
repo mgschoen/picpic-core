@@ -1,38 +1,13 @@
 const brain = require('brain.js')
 const ProgressBar = require('node-progress-bars')
 
-let preprocessTrainingData = function (features, labels, type, options) {
-    let trainingFeatures, trainingLabels
-    switch (type) {
-        case 'slice':
-            let n = options.slices || 1000
-            trainingFeatures = features.slice(0, n)
-            trainingLabels = labels.slice(0,n)
-            break
-        case 'balanced':
-        default:
-            let keywordIndices = [],
-                keywordFeatures = [],
-                keywordLabels = [],
-                regularTermsLabels = []
-            labels.forEach((label,idx) => {
-                if (label === 1) keywordIndices.push(idx)
-            })
-            for (let index of keywordIndices) {
-                keywordFeatures.push(features.splice(index, 1))
-                keywordLabels.push(1)
-                regularTermsLabels.push(0)
-            }
-            let regularTermsFeatures = features.slice(0, keywordFeatures.length)
-            trainingFeatures = [...keywordFeatures, ...regularTermsFeatures]
-            trainingLabels = [...keywordLabels, ...regularTermsLabels]
-    }
-    return trainingFeatures.map((featureSet, index) => {
+let preprocessTrainingData = function (features, labels) {
+    return features.map((featureSet, index) => {
         return { 
             input: featureSet, 
             output: { 
-                keyword: trainingLabels[index],
-                notKeyword: 1 - trainingLabels[index]
+                keyword: labels[index],
+                notKeyword: 1 - labels[index]
             }
         }
     })
