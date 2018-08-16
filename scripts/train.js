@@ -19,7 +19,9 @@ const fs = require('fs')
 
 const SVMClassifier = require('../modules/search-term-extraction/svm-classifier')
 const FFNNClassifier = require('../modules/search-term-extraction/ffnn-classifier')
+const ValueList = require('../modules/print/value-list')
 const { terminate } = require('./script-util')
+const { roundToDecimals } = require('../modules/util')
 
 const APP_ROOT = require('app-root-path')
 const OUTPUT_PATH_DEFAULT = APP_ROOT + '/data/'
@@ -122,17 +124,46 @@ let predictionsCorrect = predictions.filter((p, i) => {
     return p === correctLabels[i]
 })
 let predictionRate = predictionsCorrect.length / predictions.length
+let predictionRateRegular = regularTermsCorrect/regularTermsTotal
+let predictionRateKeywords = keywordsCorrect/keywordsTotal
+let predictedKeywords = predictions.filter(p => p === 1).length
+let keywordPrecision = keywordsCorrect/predictedKeywords
 
 // Print evaluation
-console.log()
-console.log(`Rate of correct predictions: ${100 * predictionRate} %`)
-console.log(`Correctly predicted regular terms: ${100 * regularTermsCorrect/regularTermsTotal} %` +
-    ` (${regularTermsCorrect}/${regularTermsTotal})`)
-console.log(`Correctly predicted keywords: ${100 * keywordsCorrect/keywordsTotal} %` +
-    ` (${keywordsCorrect}/${keywordsTotal})`)
-let predictedKeywords = predictions.filter(p => p === 1).length
-console.log(`Of all predicted keywords, ${100 * keywordsCorrect/predictedKeywords} % (${keywordsCorrect}/${predictedKeywords}) were actually keywords`)
-console.log()
+let evaluation = new ValueList('Training evaluation', [
+    [
+        {
+            key: 'Correct predictions total',
+            value: predictionRate,
+            type: 'gauge',
+            max: 1,
+            label: `${roundToDecimals(predictionRate * 100, 2)} %`
+        }
+    ],[
+        {
+            key: 'Correct predictions for regular terms',
+            value: predictionRateRegular,
+            type: 'gauge',
+            max: 1,
+            label: `${roundToDecimals(predictionRateRegular * 100, 2)} % (${regularTermsCorrect}/${regularTermsTotal})`
+        },{
+            key: 'Correct predictions for keywords',
+            value: predictionRateKeywords,
+            type: 'gauge',
+            max: 1,
+            label: `${roundToDecimals(predictionRateKeywords * 100, 2)} % (${keywordsCorrect}/${keywordsTotal})`
+        },{
+            key: 'Prediction precision',
+            value: keywordPrecision,
+            type: 'gauge',
+            max: 1,
+            label: `${roundToDecimals(keywordPrecision * 100, 2)} % (${keywordsCorrect}/${predictedKeywords} predicted keywords were actually keywords)`
+        }
+    ]
+], {
+    keyWidth: 40
+})
+evaluation.print()
 
 // Save the serialized trained model
 let serializedModel = classifier.serialize()
