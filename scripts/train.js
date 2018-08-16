@@ -18,11 +18,12 @@ const LineReader = require('n-readlines')
 const fs = require('fs')
 
 const SVMClassifier = require('../modules/search-term-extraction/svm-classifier')
+const FFNNClassifier = require('../modules/search-term-extraction/ffnn-classifier')
 const { terminate } = require('./script-util')
 
 const APP_ROOT = require('app-root-path')
 const OUTPUT_PATH_DEFAULT = APP_ROOT + '/data/'
-const VALID_MODEL_TYPES = [ 'svm' ]
+const VALID_MODEL_TYPES = [ 'svm', 'ffnn' ]
 
 const USAGE_STRING = `
 yarn run train || npm run train
@@ -69,6 +70,9 @@ switch (modelType) {
     case 'svm':
         classifier = new SVMClassifier()
         break
+    case 'ffnn':
+        classifier = new FFNNClassifier()
+        break
     default:
         terminate(`Unknown model type '${modelType}'`, 1)
 }
@@ -85,9 +89,8 @@ while (block = getNextNLines(lineReaderTraining, 500)) {
     trainingFeatures = trainingFeatures.concat(block.features)
     trainingLabels = trainingLabels.concat(block.labels)
 }
+console.log(`Read ${linesTotal} lines`)
 classifier.train(trainingFeatures, trainingLabels)
-console.log(`Done training after reading ${linesTotal} lines`)
-
 
 // Evaluate training
 let trainingDataPathComponents = trainingDataPath.split('training.')
@@ -123,6 +126,6 @@ console.log(`Correctly predicted regular terms: ${100 * regularTermsCorrect/regu
     ` (${regularTermsCorrect}/${regularTermsTotal})`)
 console.log(`Correctly predicted keywords: ${100 * keywordsCorrect/keywordsTotal} %` +
     ` (${keywordsCorrect}/${keywordsTotal})`)
-let predictedKeywords = predictions.filter(p => p === 1)
-console.log(`Predicted keywords: ${predictedKeywords.length}`)
+let predictedKeywords = predictions.filter(p => p === 1).length
+console.log(`Of all predicted keywords, ${100 * keywordsCorrect/predictedKeywords} % (${keywordsCorrect}/${predictedKeywords}) were actually keywords`)
 console.log()
