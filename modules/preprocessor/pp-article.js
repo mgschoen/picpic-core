@@ -1,4 +1,3 @@
-const Natural = require('natural')
 const WordPOS = require('wordpos')
 
 WordPOS.defaults = { stopwords: false }
@@ -11,7 +10,8 @@ const {
     tokenizePlainText,
     getNGrams,
     constructSearchRegex,
-    nonWordChars
+    nonWordChars,
+    isStopword
  } = require('../util')
 
 function generateFullText (paragraphs) {
@@ -148,18 +148,34 @@ Preprocessor.prototype.preprocess = function () {
     })
 }
 
-Preprocessor.prototype.getStemmedTerms = function (sortFunction) {
+Preprocessor.prototype.getStemmedTerms = function (sortFunction, excludeStopwords) {
     if (this.stemmedUniqueTerms) {
-        let terms = []
+        let allTerms = []
+        let resultTerms
+        // append stemmed terms to term object
         for (let term in this.stemmedUniqueTerms) {
             let entry = this.stemmedUniqueTerms[term]
             entry.stemmedTerm = term
-            terms.push(entry)
+            allTerms.push(entry)
         }
+        // exclude stopwords if specified
+        if (excludeStopwords) {
+            resultTerms = allTerms.filter(term => {
+                let noStopword = !isStopword(term.stemmedTerm)
+                for (let originalTerm of term.originalTerms) {
+                    if (isStopword(originalTerm))
+                        noStopword = false
+                }
+                return noStopword
+            })
+        } else {
+            resultTerms = allTerms
+        }
+        // sort terms if specified
         if (sortFunction) {
-            return terms.sort(sortFunction)
+            return resultTerms.sort(sortFunction)
         }
-        return terms
+        return resultTerms
     } else {
         return []
     }
