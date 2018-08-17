@@ -168,7 +168,7 @@ db.loadDatabase({}, async err => {
         }
 
         // Create a CSV block of training data
-        let flaggedTerms = articlePreprocessor.getStemmedTerms()
+        let flaggedTerms = articlePreprocessor.getStemmedTerms(null, true) // exclude stopwords
         termsTotal += flaggedTerms.length
         console.log(`${article.$loki} - ${article.url} - ${flaggedTerms.filter(term => term.isKeyword).length} keywords`)
         let trainingCsv = ''
