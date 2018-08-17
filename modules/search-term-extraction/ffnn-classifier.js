@@ -26,7 +26,6 @@ function updateProgressBars (iterationsBar, errorBar, logString) {
 
 let FastForwardNNClassifier = function () {
     this.model = new brain.NeuralNetwork()
-    this.keywordThreshold = 0.05
     this.errorThreshold = 0.005
 }
 
@@ -76,13 +75,7 @@ FastForwardNNClassifier.prototype.predict = function (features) {
     for (let feature of features) {
         predictions.push(this.model.run(feature))
     }
-    let aboveThreshold = predictions.map(p => {
-        return (p.keyword >= this.keywordThreshold) ? 1 : 0
-    })
-    let predictedLabels = predictions.map(p => {
-        return (p.keyword >= p.notKeyword) ? 1 : 0
-    })
-    return aboveThreshold
+    return predictions.map(p => p.keyword)
 }
 
 FastForwardNNClassifier.prototype.serialize = function () {

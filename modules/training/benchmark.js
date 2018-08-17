@@ -3,9 +3,10 @@ const LineReader = require('n-readlines')
 const ValueList = require('../print/value-list')
 const { getNextNLines, roundToDecimals } = require('../util')
 
-let Benchmark = function (classifier, testDataPath) {
+let Benchmark = function (classifier, testDataPath, keywordThreshold) {
     this.classifier = classifier
     this.testDataPath = testDataPath
+    this.keywordThreshold = (typeof keywordThreshold === 'number') ? keywordThreshold : 0.05
     this.testData = null
 }
 
@@ -30,27 +31,28 @@ Benchmark.prototype.run = function () {
     }
 
     let predictions = this.classifier.predict(this.testData.features)
+    let classifications = predictions.map(p => p > this.keywordThreshold ? 1 : 0)
 
     let keywordsTotal = this.testData.labels.filter(l => l === 1).length
     let regularTermsTotal = this.testData.labels.filter(l => l === 0).length
     let keywordsCorrect = 0
     let regularTermsCorrect = 0
-    predictions.forEach((p, i) => {
+    classifications.forEach((classification, i) => {
         let correct = this.testData.labels[i]
-        if (correct === 0 && p === correct) {
+        if (correct === 0 && classification === correct) {
             regularTermsCorrect++
         }
-        if (correct === 1 && p === correct) {
+        if (correct === 1 && classification === correct) {
             keywordsCorrect++
         }
     })
-    let predictionsCorrect = predictions.filter((p, i) => {
-        return p === this.testData.labels[i]
+    let predictionsCorrect = classifications.filter((c, i) => {
+        return c === this.testData.labels[i]
     })
     let predictionRate = predictionsCorrect.length / predictions.length
     let predictionRateRegular = regularTermsCorrect/regularTermsTotal
     let predictionRateKeywords = keywordsCorrect/keywordsTotal
-    let predictedKeywords = predictions.filter(p => p === 1).length
+    let predictedKeywords = classifications.filter(c => c === 1).length
     let keywordPrecision = keywordsCorrect/predictedKeywords
 
     // Print evaluation
