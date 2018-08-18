@@ -10,13 +10,13 @@ const TermPlot = require('../modules/print/term-plot')
 const ValueList = require('../modules/print/value-list')
 
 const { concatStrings } = require('../modules/util')
+const { terminate } = require('./script-util')
 
 // Read article ID from command line
 let argv = Minimist(process.argv.slice(2))
 let articleID = argv._[0]
 if (Number.isNaN(parseInt(articleID))) {
-    console.log(`The article ID you specified (${articleID}) is not valid.`)
-    process.exit()
+    terminate(`The article ID you specified (${articleID}) is not valid.`, 0)
 }
 let threshold = parseFloat(argv._[1]) || 0.5
 

@@ -5,7 +5,8 @@ WordPOS.defaults = { stopwords: false }
 const Wordpos = new WordPOS()
 
 const { 
-    concatStrings, 
+    concatStrings,
+    filterStopwords,
     stemPlainText,
     tokenizePlainText,
     getNGrams,
@@ -159,18 +160,7 @@ Preprocessor.prototype.getStemmedTerms = function (sortFunction, excludeStopword
             allTerms.push(entry)
         }
         // exclude stopwords if specified
-        if (excludeStopwords) {
-            resultTerms = allTerms.filter(term => {
-                let noStopword = !isStopword(term.stemmedTerm)
-                for (let originalTerm of term.originalTerms) {
-                    if (isStopword(originalTerm))
-                        noStopword = false
-                }
-                return noStopword
-            })
-        } else {
-            resultTerms = allTerms
-        }
+        resultTerms = excludeStopwords ? filterStopwords(allTerms) : allTerms
         // sort terms if specified
         if (sortFunction) {
             return resultTerms.sort(sortFunction)

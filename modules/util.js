@@ -33,6 +33,44 @@ function constructSearchRegex (term, wordSeparator, termBorder) {
     )
 }
 
+/**
+ * Counts how many times each distinct element is
+ * contained in an array. Returns the results as 
+ * an object.
+ * 
+ * E.g. the array 
+ *   [ 'apple', 'strawberry', 'apple', 'apple', 'potato', 'strawberry' ]
+ * would return 
+ *   { 'apple': 3, 'potato': 1, 'strawberry': 2  }
+ * @param {array} array 
+ * @return {object}
+ */
+function countArrayElements (array) {
+    let count = {}
+    for (let elem of array) {
+        if (count[elem]) {
+            count[elem] += 1
+        } else {
+            count[elem] = 1
+        }
+    }
+    return count
+}
+
+function filterStopwords (terms) {
+    return terms.filter(term => {
+        if (isStopword(term.stemmedTerm)) {
+            return false
+        }
+        for (let originalTerm of term.originalTerms) {
+            if (isStopword(originalTerm)) {
+                return false
+            }
+        }
+        return true
+    })
+}
+
 function getNextNLines (lineReader, n) {
     let numLines = 0,
         lineBuffer = null,
@@ -112,6 +150,8 @@ module.exports = {
     arrayToObject,
     concatStrings,
     constructSearchRegex,
+    countArrayElements,
+    filterStopwords,
     getNextNLines,
     getNGrams,
     isStopword,

@@ -18,6 +18,7 @@ const dateString = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-`+
 const EXPORT_FILENAME_TRAINING = `training.${dateString}.csv`
 const EXPORT_FILENAME_TEST = `test.${dateString}.csv`
 
+const { countArrayElements } = require('../modules/util')
 const { terminate } = require('./script-util')
 
 /**
@@ -39,30 +40,6 @@ function stringFromList (values, separator) {
         }
     }
     return string
-}
-
-/**
- * Counts how many times each distinct element is
- * contained in an array. Returns the results as 
- * an object.
- * 
- * E.g. the array 
- *   [ 'apple', 'strawberry', 'apple', 'apple', 'potato', 'strawberry' ]
- * would return 
- *   { 'apple': 3, 'potato': 1, 'strawberry': 2  }
- * @param {array} array 
- * @return {object}
- */
-function countArrayElements (array) {
-    let count = {}
-    for (let elem of array) {
-        if (count[elem]) {
-            count[elem] += 1
-        } else {
-            count[elem] = 1
-        }
-    }
-    return count
 }
 
 // stemmedTerm,originalTerms,termFrequency,firstOccurrence,numH1,numH2,numP,numLi,numOther,...
