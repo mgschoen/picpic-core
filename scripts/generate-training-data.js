@@ -21,6 +21,18 @@ const EXPORT_FILENAME_TEST = `test.${dateString}.csv`
 const { countArrayElements } = require('../modules/util')
 const { terminate } = require('./script-util')
 
+const USAGE_STRING = `
+Usage of this script:
+
+yarn run generate || npm run generate
+    -s, --storage-path        (location of the storage file, required)
+    -e, --export-path         (where to store the generated data, defaults to ./data/)
+    --tf                      (include termFrequency)
+    --fo                      (include firstOccurrence)
+    --ptype                   (include paragraphType)
+    --pos                     (include POS)
+`
+
 /**
  * Concatenates a list of values to a string with
  * a specified separator string between the values
@@ -84,7 +96,7 @@ function termToCSV (kw, options) {
 let argv = Minimist(process.argv.slice(2))
 let storageFilePath = argv['s'] || argv['storage-path']
 if (!storageFilePath) {
-    terminate('No storage path specified (use command line argument -s or --storage-path)', 9)
+    terminate('No storage path specified (use command line argument -s or --storage-path)\n' + USAGE_STRING, 9)
 }
 let exportPath = argv['e'] || argv['export-path'] || `${APP_ROOT}/data/`
 if (exportPath[exportPath.length - 1] !== '/') {
