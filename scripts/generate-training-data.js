@@ -62,12 +62,17 @@ function termToCSV (kw, options) {
     let isKeyword = kw.isKeyword ? '1' : '0'
 
     // construct string
-    let csvString = `${kw.stemmedTerm},${stringFromList(kw.originalTerms, '|')},` +
-        `${kw.termFrequency},${kw.firstOccurrence},`
-    if (options.withPtype) {
+    let csvString = `${kw.stemmedTerm},${stringFromList(kw.originalTerms, '|')},`
+    if (options.fields.indexOf('tf') >= 0) {
+        csvString += `${kw.termFrequency},`
+    }
+    if (options.fields.indexOf('fo') >= 0) {
+        csvString += `${kw.firstOccurrence},`
+    }
+    if (options.fields.indexOf('ptype') >= 0) {
         csvString += `${numH1},${numH2},${numP},${numLi},${numOther},`
     }
-    if (options.withPOS) {
+    if (options.fields.indexOf('pos') >= 0) {
         csvString += `${kw.pos.nouns.length},${kw.pos.verbs.length},` +
         `${kw.pos.adjectives.length},${kw.pos.adverbs.length},${kw.pos.rest.length},`     
     }
@@ -85,12 +90,16 @@ let exportPath = argv['e'] || argv['export-path'] || `${APP_ROOT}/data/`
 if (exportPath[exportPath.length - 1] !== '/') {
     exportPath += '/'
 }
-let includePOS = argv['pos'] || false
-let includePtype = argv['ptype'] || false
+let includeFields = []
+if (argv['tf']) includeFields.push('tf')
+if (argv['fo']) includeFields.push('fo')
+if (argv['pos']) includeFields.push('pos')
+if (argv['ptype']) includeFields.push('ptype')
 
 console.log()
 console.log(`Reading data from file ${storageFilePath} ...`)
 console.log(`Exporting training data to ${exportPath} ...`)
+console.log(`Including fields: ${stringFromList(includeFields, ', ')}`)
 console.log()
 
 // Connect to database
@@ -153,9 +162,9 @@ db.loadDatabase({}, async err => {
         for (let index in flaggedTerms) {
             let term = flaggedTerms[index]
             if (index % 10 === 0) {
-                testCsv += termToCSV(term, {withPOS: includePOS, withPtype: includePtype})
+                testCsv += termToCSV(term, {fields: includeFields})
             } else {
-                trainingCsv += termToCSV(term, {withPOS: includePOS, withPtype: includePtype})
+                trainingCsv += termToCSV(term, {fields: includeFields})
             }
         }
 
