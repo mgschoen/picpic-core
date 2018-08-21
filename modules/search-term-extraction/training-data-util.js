@@ -1,3 +1,7 @@
+function scaledSigmoid (x) {
+    return (1 - Math.exp(-x)) / (1 + Math.exp(-x))
+}
+
 /**
  * From a list of features and labels, select a subset
  * for training, according to a heuristic defined in `type`,
@@ -57,5 +61,6 @@ function selectTrainingData (features, labels, type, options) {
 }
 
 module.exports = { 
+    scaledSigmoid,
     selectTrainingData
 }

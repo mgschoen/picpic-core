@@ -11,8 +11,7 @@ const {
     tokenizePlainText,
     getNGrams,
     constructSearchRegex,
-    nonWordChars,
-    isStopword
+    nonWordChars
  } = require('../util')
 
 function generateFullText (paragraphs) {

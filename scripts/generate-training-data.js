@@ -20,6 +20,7 @@ const EXPORT_FILENAME_TEST = `test.${dateString}.csv`
 
 const { countArrayElements } = require('../modules/util')
 const { terminate } = require('./script-util')
+const { scaledSigmoid } = require('../modules/search-term-extraction/training-data-util')
 
 const USAGE_STRING = `
 Usage of this script:
@@ -27,6 +28,7 @@ Usage of this script:
 yarn run generate || npm run generate
     -s, --storage-path        (location of the storage file, required)
     -e, --export-path         (where to store the generated data, defaults to ./data/)
+    -n, --normalize           (if present, values are normalized to the range [0,1])
     --tf                      (include termFrequency)
     --fo                      (include firstOccurrence)
     --ptype                   (include paragraphType)
@@ -72,21 +74,29 @@ function termToCSV (kw, options) {
         }
     }
     let isKeyword = kw.isKeyword ? '1' : '0'
+    let normalize = options.normalize ? true : false
 
     // construct string
     let csvString = `${kw.stemmedTerm},${stringFromList(kw.originalTerms, '|')},`
     if (options.fields.indexOf('tf') >= 0) {
-        csvString += `${kw.termFrequency},`
+        csvString += `${normalize ? scaledSigmoid(kw.termFrequency-1) : kw.termFrequency},`
     }
     if (options.fields.indexOf('fo') >= 0) {
         csvString += `${kw.firstOccurrence},`
     }
     if (options.fields.indexOf('ptype') >= 0) {
-        csvString += `${numH1},${numH2},${numP},${numLi},${numOther},`
+        csvString += `${normalize ? scaledSigmoid(numH1) : numH1},` +
+            `${normalize ? scaledSigmoid(numH2) : numH2},` + 
+            `${normalize ? scaledSigmoid(numP) : numP},` + 
+            `${normalize ? scaledSigmoid(numLi) : numLi},` + 
+            `${normalize ? scaledSigmoid(numOther) : numOther},`
     }
     if (options.fields.indexOf('pos') >= 0) {
-        csvString += `${kw.pos.nouns.length},${kw.pos.verbs.length},` +
-        `${kw.pos.adjectives.length},${kw.pos.adverbs.length},${kw.pos.rest.length},`     
+        csvString += `${normalize ? scaledSigmoid(kw.pos.nouns.length) : kw.pos.nouns.length},` + 
+            `${normalize ? scaledSigmoid(kw.pos.verbs.length) : kw.pos.verbs.length},` +
+            `${normalize ? scaledSigmoid(kw.pos.adjectives.length) : kw.pos.adjectives.length},` + 
+            `${normalize ? scaledSigmoid(kw.pos.adverbs.length) : kw.pos.adverbs.length},` + 
+            `${normalize ? scaledSigmoid(kw.pos.rest.length) : kw.pos.rest.length},`     
     }
     csvString += `${isKeyword}\n`
     return csvString
@@ -107,6 +117,7 @@ if (argv['tf']) includeFields.push('tf')
 if (argv['fo']) includeFields.push('fo')
 if (argv['pos']) includeFields.push('pos')
 if (argv['ptype']) includeFields.push('ptype')
+let normalize = argv['n'] || argv['normalize'] || false
 
 console.log()
 console.log(`Reading data from file ${storageFilePath} ...`)
@@ -174,9 +185,9 @@ db.loadDatabase({}, async err => {
         for (let index in flaggedTerms) {
             let term = flaggedTerms[index]
             if (index % 10 === 0) {
-                testCsv += termToCSV(term, {fields: includeFields})
+                testCsv += termToCSV(term, {fields: includeFields, normalize})
             } else {
-                trainingCsv += termToCSV(term, {fields: includeFields})
+                trainingCsv += termToCSV(term, {fields: includeFields, normalize})
             }
         }
 
