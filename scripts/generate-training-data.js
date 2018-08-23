@@ -163,9 +163,7 @@ db.loadDatabase({}, async err => {
             keywordsCollection.find({"$loki": { "$in": dbEntry.leadImage.keywords }})
         
         // Preprocess data
-        let paragraphs = article.article.paragraphs
-        paragraphs.unshift({type: 'H1', content: `${article.article.headline}.`})
-        let articlePreprocessor = new ArticlePreprocessor(paragraphs)
+        let articlePreprocessor = new ArticlePreprocessor(article)
         let keywordsPreprocessor = new KeywordsPreprocessor(article.leadImage)
         await articlePreprocessor.preprocess()
         await keywordsPreprocessor.preprocess()

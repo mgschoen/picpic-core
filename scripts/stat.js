@@ -23,14 +23,7 @@ let threshold = parseFloat(argv._[1]) || 0.5
 // Request article from API
 rest.get(`http://picpic-api.argonn.me/article/${articleID}/`, async (data, response) => {
 
-    // Preprocess the article for analysis
-    let paragraphs = data.article.paragraphs
-    paragraphs.unshift({
-        type: 'H1',
-        content: data.article.headline
-    })
-
-    let preprocessor = new ArticlePreprocessor(paragraphs)
+    let preprocessor = new ArticlePreprocessor(data)
     await preprocessor.preprocess()
 
     let searchTermExtractor = new StatisticalSearchTermExtractor(

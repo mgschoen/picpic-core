@@ -122,8 +122,13 @@ function stemAndCombine (terms) {
     return combinedTerms
 }
 
-let Preprocessor = function (paragraphs) {
-    this.originalParagraphs = paragraphs
+let Preprocessor = function (articleObject) {
+    this.originalArticle = articleObject
+    this.originalParagraphs = [...articleObject.article.paragraphs]
+    this.originalParagraphs.unshift({
+        type: 'H1',
+        content: this.originalArticle.article.headline
+    })
     this.fullText = null
     this.fullTextStemmed = null
     this.allTerms = null

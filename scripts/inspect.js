@@ -41,13 +41,7 @@ rest.get(`http://picpic-api.argonn.me/article/${articleID}/`, async (data, respo
         articleInfo.print()
 
         // Preprocess the article for analysis
-        let paragraphs = data.article.paragraphs
-        paragraphs.unshift({
-            type: 'H1',
-            content: data.article.headline
-        })
-
-        let articlePreprocessor = new ArticlePreprocessor(paragraphs)
+        let articlePreprocessor = new ArticlePreprocessor(data)
         await articlePreprocessor.preprocess()
 
         // Preprocess keywords for analysis
