@@ -7,7 +7,7 @@ const ArticlePreprocessor = require('../modules/preprocessor/pp-article')
 const LearningSearchTermExtractor = require('../modules/search-term-extraction/ste-learning')
 const ValueList = require('../modules/print/value-list')
 
-const { terminate } = require('./script-util')
+const { terminate } = require('./util/script-util')
 const { concatStrings } = require('../modules/util')
 
 // Read and check command line arguments

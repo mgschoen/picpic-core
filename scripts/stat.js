@@ -10,7 +10,7 @@ const TermPlot = require('../modules/print/term-plot')
 const ValueList = require('../modules/print/value-list')
 
 const { concatStrings } = require('../modules/util')
-const { terminate } = require('./script-util')
+const { terminate } = require('./util/script-util')
 
 // Read article ID from command line
 let argv = Minimist(process.argv.slice(2))

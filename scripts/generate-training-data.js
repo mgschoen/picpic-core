@@ -19,7 +19,7 @@ const EXPORT_FILENAME_TRAINING = `training.${dateString}.csv`
 const EXPORT_FILENAME_TEST = `test.${dateString}.csv`
 
 const { countArrayElements } = require('../modules/util')
-const { terminate } = require('./script-util')
+const { terminate } = require('./util/script-util')
 const { scaledSigmoid } = require('../modules/search-term-extraction/training-data-util')
 
 const USAGE_STRING = `
