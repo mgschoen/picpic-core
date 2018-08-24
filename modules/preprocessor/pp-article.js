@@ -4,6 +4,7 @@ WordPOS.defaults = { stopwords: false }
 
 const Wordpos = new WordPOS()
 
+const { calaisAggregator } = require('./calais')
 const { 
     concatStrings,
     filterStopwords,
@@ -26,7 +27,7 @@ function assignParagraphTypes (paragraphs, fullText) {
         let ngrams = getNGrams(tokens, fullText, 2, 4)
         let terms = [...tokens, ...ngrams]
         for (let term of terms) {
-            if (allTerms[term]) {
+            if (allTerms[term] && !allTerms[term].containingElements.includes(p.type)) {
                 allTerms[term].containingElements.push(p.type)
             } else {
                 allTerms[term] = {
@@ -127,12 +128,13 @@ let Preprocessor = function (articleObject) {
     this.originalParagraphs = [...articleObject.article.paragraphs]
     this.originalParagraphs.unshift({
         type: 'H1',
-        content: this.originalArticle.article.headline
+        content: `${this.originalArticle.article.headline}.`
     })
     this.fullText = null
     this.fullTextStemmed = null
     this.allTerms = null
     this.stemmedUniqueTerms = null
+    this.aggregatedTerms = null
 }
 
 Preprocessor.prototype.preprocess = function () {
@@ -145,6 +147,12 @@ Preprocessor.prototype.preprocess = function () {
             await assignPOS(this.allTerms)
             assignFirstOccurrences(this.allTerms, this.fullText)
             this.stemmedUniqueTerms = stemAndCombine(this.allTerms)
+            if (this.originalArticle.calais) {
+                this.aggregatedTerms = await calaisAggregator(
+                    this.stemmedUniqueTerms, 
+                    this.originalArticle.calais, 
+                    this.fullText)
+            }
             resolve()
         } catch (error) {
             reject(error)
@@ -153,13 +161,14 @@ Preprocessor.prototype.preprocess = function () {
     })
 }
 
-Preprocessor.prototype.getStemmedTerms = function (sortFunction, excludeStopwords) {
-    if (this.stemmedUniqueTerms) {
+Preprocessor.prototype.getProcessedTerms = function (sortFunction, excludeStopwords) {
+    let termOrigin = this.aggregatedTerms ? this.aggregatedTerms : this.stemmedUniqueTerms
+    if (termOrigin) {
         let allTerms = []
         let resultTerms
-        // append stemmed terms to term object
-        for (let term in this.stemmedUniqueTerms) {
-            let entry = this.stemmedUniqueTerms[term]
+        // append original terms to term array
+        for (let term in termOrigin) {
+            let entry = termOrigin[term]
             entry.stemmedTerm = term
             allTerms.push(entry)
         }

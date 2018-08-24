@@ -25,7 +25,7 @@ if (Number.isNaN(parseInt(articleID))) {
 }
 
 // Request article from API
-rest.get(`http://picpic-api.argonn.me/article/${articleID}/`, async (data, response) => {
+rest.get(`http://localhost:27112/article/${articleID}/`, async (data, response) => {
 
     // We can only train our system if we know something about the associated image
     if (data.leadImage) {
@@ -49,7 +49,7 @@ rest.get(`http://picpic-api.argonn.me/article/${articleID}/`, async (data, respo
         await keywordsPreprocessor.preprocess()
          
         // Match image keywords with terms from the text
-        let matcher = new Matcher(articlePreprocessor.getStemmedTerms(), 
+        let matcher = new Matcher(articlePreprocessor.getProcessedTerms(), 
             keywordsPreprocessor.extendedKeywordList)
         matcher.match()
         let matches = matcher.matchedTerms
@@ -122,6 +122,7 @@ rest.get(`http://picpic-api.argonn.me/article/${articleID}/`, async (data, respo
                 firstOccurrence: match.firstOccurrence,
                 paragraphTypes: match.containingElements,
                 pos: match.pos,
+                entityType: match.calaisEntityType || '-',
                 keywordType: match.keywordType
             }
             tableData.push(entry)

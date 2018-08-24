@@ -167,7 +167,7 @@ db.loadDatabase({}, async err => {
         let keywordsPreprocessor = new KeywordsPreprocessor(article.leadImage)
         await articlePreprocessor.preprocess()
         await keywordsPreprocessor.preprocess()
-        let matcher = new Matcher(articlePreprocessor.getStemmedTerms(), 
+        let matcher = new Matcher(articlePreprocessor.getProcessedTerms(), 
             keywordsPreprocessor.extendedKeywordList)
         let keywords = matcher.getKeywordTerms()
         for (let kw of keywords) {
@@ -175,7 +175,7 @@ db.loadDatabase({}, async err => {
         }
 
         // Create a CSV block of training data
-        let flaggedTerms = articlePreprocessor.getStemmedTerms(null, true) // exclude stopwords
+        let flaggedTerms = articlePreprocessor.getProcessedTerms(null, true) // exclude stopwords
         termsTotal += flaggedTerms.length
         console.log(`${article.$loki} - ${article.url} - ${flaggedTerms.filter(term => term.isKeyword).length} keywords`)
         let trainingCsv = ''

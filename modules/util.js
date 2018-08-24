@@ -6,6 +6,32 @@ const Stopwords = [...Natural.stopwords, 'she', 'new']
 const nonWordChars = '[^A-Za-zА-Яа-я0-9_]+'
 const nonWordNonPunctuationChars = '[^A-Za-zА-Яа-я0-9_,\\.\\!\\?\\:]+'
 
+function arrayEndsWith (arrayA, arrayB) {
+    let indexA = arrayA.length - 1
+    let indexB = arrayB.length - 1
+    while (indexA >= 0 && indexB >= 0 && 
+        arrayA[indexA] === arrayB[indexB]) {
+            indexA--
+            indexB--
+    }
+    if (indexB < 0)
+        return true
+    return false
+}
+
+function arrayStartsWith (arrayA, arrayB) {
+    let indexA = 0
+    let indexB = 0
+    while (indexA < arrayA.length && indexB < arrayB.length && 
+        arrayA[indexA] === arrayB[indexB]) {
+            indexA++
+            indexB++
+    }
+    if (indexB >= arrayB.length)
+        return true
+    return false
+}
+
 function arrayToObject (array, keyForKey) {
     let object = {}
     for (let item of array) {
@@ -69,6 +95,35 @@ function filterStopwords (terms) {
         }
         return true
     })
+}
+
+function findOverlapLeft (stringA, stringB) {
+    let wordsA = tokenizePlainText(stringA)
+    let wordsB = tokenizePlainText(stringB)
+    if (wordsB.length === 0)
+        return ''
+    if (arrayStartsWith(wordsA, wordsB))
+        return stringB
+    return findOverlapLeft(stringA, concatStrings(wordsB.slice(1, wordsB.length)))
+}
+
+function findOverlapRight (stringA, stringB) {
+    let wordsA = tokenizePlainText(stringA)
+    let wordsB = tokenizePlainText(stringB)
+    if (wordsB.length === 0)
+        return ''
+    if (arrayEndsWith(wordsA, wordsB))
+        return stringB
+    return findOverlapRight(stringA, concatStrings(wordsB.slice(0, wordsB.length - 1)))
+}
+
+function findOverlap (stringA, stringB) {
+    let overlapRight = findOverlapRight(stringA, stringB)
+    let overlapLeft = findOverlapLeft(stringA, stringB)
+    return {
+        left: overlapLeft,
+        right: overlapRight
+    }
 }
 
 function getNextNLines (lineReader, n) {
@@ -152,6 +207,7 @@ module.exports = {
     constructSearchRegex,
     countArrayElements,
     filterStopwords,
+    findOverlap,
     getNextNLines,
     getNGrams,
     isStopword,

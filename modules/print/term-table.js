@@ -11,10 +11,11 @@ const TermTable = function (data) {
             'term (stemmed)',
             'terms (article)',
             'terms (KW)',
-            'term freq', 
-            'first occurrence', 
+            'tf', 
+            'fo', 
             'paragraph types',
             'POS (n-v-adj-adv-r)',
+            'entity type',
             'kw type'
         ]
     })
@@ -29,6 +30,7 @@ const TermTable = function (data) {
             concatStrings(row.paragraphTypes),
             `${row.pos.nouns.length} - ${row.pos.verbs.length} - ${row.pos.adjectives.length} - `+ 
                 `${row.pos.adverbs.length} - ${row.pos.rest.length}`,
+            row.entityType,
             row.keywordType
         ])
     }

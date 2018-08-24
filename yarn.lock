@@ -342,6 +342,10 @@ function.name@^1.0.3:
   dependencies:
     noop6 "^1.0.1"
 
+fuzzyset.js@^0.0.7:
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/fuzzyset.js/-/fuzzyset.js-0.0.7.tgz#33365056dfaa92945692297db56b3595f47d0601"
+
 get-cursor-position@^1.0.4:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/get-cursor-position/-/get-cursor-position-1.0.5.tgz#1558c35aa056726eae704d5590aeaa5945989f5a"

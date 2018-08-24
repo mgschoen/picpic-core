@@ -1,8 +1,13 @@
 const math = require('mathjs')
+const Fuzzy = require('fuzzyset.js')
 
 const { arrayToObject } = require('../util')
 
+const EXCLUDED_KEYWORD_TYPES = ['Age', 'Color', 'Composition', 'Gender', 
+    'ImageTechnique', 'NumberOfPeople', 'Viewpoint']
+
 let articleTermsDict = null
+let articleTermsLookup = null
 let imageTermsDict = null
 
 function calculateStats (articleTerms, imageTerms, matchedTerms) {
@@ -53,6 +58,7 @@ function calculateStats (articleTerms, imageTerms, matchedTerms) {
 const Matcher = function (articleTerms, imageTerms) {
     this.articleTerms = articleTerms
     articleTermsDict = arrayToObject(articleTerms, 'stemmedTerm')
+    articleTermsLookup = Fuzzy(articleTerms.map(term => term.stemmedTerm))
     this.imageTerms = imageTerms
     imageTermsDict = arrayToObject(imageTerms, 'stemmedText')
     this.matchedTerms = null
@@ -62,12 +68,26 @@ const Matcher = function (articleTerms, imageTerms) {
 Matcher.prototype.match = function () {
     let matches = []
     for (let kw of this.imageTerms) {
-        let possibleMatch = articleTermsDict[kw.stemmedText]
-        if (possibleMatch) {
-            possibleMatch.stemmedText = kw.stemmedText
-            possibleMatch.originalTermsKW = kw.originalTerms
-            possibleMatch.keywordType = kw.type
+        if (EXCLUDED_KEYWORD_TYPES.indexOf(kw.type) >= 0) {
+            continue
+        }
+        let lookupTerms = articleTermsLookup.get(kw.stemmedText)
+        let bestMatch = lookupTerms ? lookupTerms[0] : null
+        let possibleMatch = (bestMatch && bestMatch[0] >= 0.75) 
+            ? articleTermsDict[bestMatch[1]]
+            : null
+        if (possibleMatch && !possibleMatch.isKeyword) {
+            possibleMatch.isKeyword = true
+            possibleMatch.stemmedText = bestMatch[1]
+            possibleMatch.originalTermsKW = [...kw.originalTerms]
+            possibleMatch.keywordType = [kw.type]
             matches.push(possibleMatch)
+        } else if (possibleMatch) {
+            let match = matches.filter(match => match.stemmedText === possibleMatch.stemmedText)[0]
+            match.originalTermsKW = [...match.originalTermsKW, ...kw.originalTerms]
+            if (!match.keywordType.includes(kw.type)) {
+                match.keywordType.push(kw.type)
+            }
         }
     }
     this.matchedTerms = matches
