@@ -52,7 +52,7 @@ rest.get(`http://localhost:27112/article/${articleID}/`, async (data, response) 
         let matcher = new Matcher(articlePreprocessor.getProcessedTerms(), 
             keywordsPreprocessor.extendedKeywordList)
         matcher.match()
-        let matches = matcher.matchedTerms
+        let matches = matcher.getKeywordTerms()
 
         // Print some statistics about the article
         let stats = matcher.stats
@@ -115,7 +115,7 @@ rest.get(`http://localhost:27112/article/${articleID}/`, async (data, response) 
         let tableData = []
         for (let match of matches) {
             let entry = {
-                termStemmed: match.stemmedText,
+                termStemmed: match.stemmedTerm,
                 termsArticle: match.originalTerms,
                 termsKeyword: match.originalTermsKW,
                 termFrequency: match.termFrequency,

@@ -97,6 +97,7 @@ class CalaisEntity {
         // prepare original terms
         let originalTerms = [...this.exactInstances, this.name]
             .filter((instance, index, array) => array.indexOf(instance) === index)
+            .map(term => term.replace(/,|\|/g, ''))
         // prepare pos
         let pos = await Wordpos.getPOS(this.name)
         return {

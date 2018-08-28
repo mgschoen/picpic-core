@@ -38,7 +38,7 @@ StorageInterface.prototype.init = async function (host, port, db) {
     let connectionString = `mongodb://${HOST}:${PORT}/${DB}`
     let client = await MongoClient.connect(connectionString, {useNewUrlParser: true})
     this.db = client.db()
-    for (let collectionName of MONGO_REQUIRED_COLLECTIONS) {
+    for (let collectionName of REQUIRED_COLLECTIONS) {
         let collection = await this.db.collection(collectionName)
         if (collection) {
             this.collections[collectionName] = collection
@@ -89,7 +89,7 @@ StorageInterface.prototype.getArticleIds = async function (queryObject) {
 StorageInterface.prototype.getArticles = async function (listOfIds) {
     if (this.ready) {
         let articles = []
-        for (let id of objectIds) {
+        for (let id of listOfIds) {
             articles.push(await this.getArticle(id))
         }
         return articles
@@ -117,7 +117,7 @@ StorageInterface.prototype.getCalais = async function (forArticle) {
     }
 }
 
-StorageInterface.prototype.getKeywords = await function (listOfIds) {
+StorageInterface.prototype.getKeywords = async function (listOfIds) {
     if (this.ready) {
         let objectIds = listOfIds.map(id => validateId(id))
         let keywords = await this.collections.keywords
