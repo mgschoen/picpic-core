@@ -1,14 +1,11 @@
 const math = require('mathjs')
 const Fuzzy = require('fuzzyset.js')
-
-const { arrayToObject } = require('../util')
+const Loki = require('lokijs')
 
 const EXCLUDED_KEYWORD_TYPES = ['Age', 'Color', 'Composition', 'Gender', 
     'ImageTechnique', 'NumberOfPeople', 'Viewpoint']
 
-let articleTermsDict = null
 let articleTermsLookup = null
-let imageTermsDict = null
 
 function calculateStats (articleTerms, imageTerms, matchedTerms) {
     let matchPercentage = Math.round((matchedTerms.length / imageTerms.length) * 10000) / 100
@@ -56,50 +53,57 @@ function calculateStats (articleTerms, imageTerms, matchedTerms) {
 }
 
 const Matcher = function (articleTerms, imageTerms) {
-    this.articleTerms = articleTerms
-    articleTermsDict = arrayToObject(articleTerms, 'stemmedTerm')
+    this.localDB = new Loki('matcher.js')
+    
+    this.articleTerms = this.localDB.addCollection('articleTerms')
+    this.articleTerms.insert(articleTerms)
+    
+    this.imageTerms = this.localDB.addCollection('imageTerms')
+    this.imageTerms.insert(imageTerms)
+
     articleTermsLookup = Fuzzy(articleTerms.map(term => term.stemmedTerm))
-    this.imageTerms = imageTerms
-    imageTermsDict = arrayToObject(imageTerms, 'stemmedText')
-    this.matchedTerms = null
+
+    this.matchedTerms = this.localDB.addCollection('matchedTerms')
     this.stats = null
 }
 
 Matcher.prototype.match = function () {
     let matches = []
-    for (let kw of this.imageTerms) {
+    let imageTerms = this.imageTerms.find()
+    for (let kw of imageTerms) {
         if (EXCLUDED_KEYWORD_TYPES.indexOf(kw.type) >= 0) {
             continue
         }
         let lookupTerms = articleTermsLookup.get(kw.stemmedText)
         let bestMatch = lookupTerms ? lookupTerms[0] : null
         let possibleMatch = (bestMatch && bestMatch[0] >= 0.75) 
-            ? articleTermsDict[bestMatch[1]]
+            ? this.articleTerms.findOne({stemmedTerm: bestMatch[1]})
             : null
         if (possibleMatch && !possibleMatch.isKeyword) {
             possibleMatch.isKeyword = true
-            possibleMatch.stemmedText = bestMatch[1]
             possibleMatch.originalTermsKW = [...kw.originalTerms]
             possibleMatch.keywordType = [kw.type]
-            matches.push(possibleMatch)
+            let match = {...possibleMatch}
+            delete match.$loki
+            delete match.meta
+            this.matchedTerms.insert(match)
         } else if (possibleMatch) {
-            let match = matches.filter(match => match.stemmedText === possibleMatch.stemmedText)[0]
+            let match = this.matchedTerms.findOne({stemmedTerm: possibleMatch.stemmedTerm})
             match.originalTermsKW = [...match.originalTermsKW, ...kw.originalTerms]
             if (!match.keywordType.includes(kw.type)) {
                 match.keywordType.push(kw.type)
             }
         }
     }
-    this.matchedTerms = matches
-    this.stats = calculateStats(this.articleTerms, this.imageTerms, this.matchedTerms)
+    this.stats = calculateStats(this.articleTerms.find(), this.imageTerms.find(), this.matchedTerms.find())
 }
 
 Matcher.prototype.getNonKeywordTerms = function () {
-    return this.articleTerms.filter(term => !imageTermsDict.hasOwnProperty(term.stemmedTerm))
+    return this.articleTerms.find({isKeyword: {$ne: true}})
 }
 
 Matcher.prototype.getKeywordTerms = function () {
-    return this.articleTerms.filter(term => imageTermsDict.hasOwnProperty(term.stemmedTerm))
+    return this.articleTerms.find({isKeyword: true})
 }
 
 module.exports = Matcher
