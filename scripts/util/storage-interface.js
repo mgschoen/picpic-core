@@ -1,147 +1,150 @@
-const Loki = require('lokijs')
-const lfsa = require('lokijs/src/loki-fs-structured-adapter')
+const { MongoClient, ObjectId } = require('mongodb')
 
 const REQUIRED_COLLECTIONS = ['articles', 'keywords', 'calais']
 
+function validateId (id) {
+    let queryId = null
+    if (typeof id === 'string') {
+        try {
+            queryId = ObjectId(id)
+        } catch (error) {
+            console.error(error.message)
+            return null
+        }
+    } else if (id instanceof ObjectId) {
+        queryId = id
+    } else {
+        console.error(`Invalid argument id: ${id} (must be of type 'string' or instance of ObjectId)`)
+        return null
+    }
+    return queryId
+}
+
 function StorageInterface () {
     this.db = null
+    this.ready = false
     this.collections = {}
     for (let collectionName of REQUIRED_COLLECTIONS) {
         this.collections[collectionName] = null
     }
 }
 
-StorageInterface.prototype.init = function (pathToStorage) {
-    return new Promise((resolve, reject) => {
+StorageInterface.prototype.init = async function (host, port, db) {
 
-        // init database
-        let adapter = new lfsa()
-        let db = new Loki(pathToStorage, {
-            adapter: adapter
-        })
+    let HOST = host || 'localhost'
+    let PORT = port || 27017
+    let DB = db || 'picpic'
 
-        db.loadDatabase({}, err => {
-            // generic error handling
-            if (err) {
-                reject(err)
-                return
-            }
-
-            // check for required collections
-            let missingCollections = []
-            for (let collectionName of REQUIRED_COLLECTIONS) {
-                let collection = db.getCollection(collectionName)
-                if (!collection) {
-                    missingCollections.push(collectionName)
-                }
-            }
-            if (missingCollections.length > 0) {
-                reject(new Error(`Could not find required collection(s) ${missingCollections}`))
-                return
-            }
-
-            // init collections
-            this.db = db
-            let collectionsList = db.listCollections()
-            for (let collectionMeta of collectionsList) {
-                this.collections[collectionMeta.name] = db.getCollection(collectionMeta.name)
-            }
-
-            resolve()
-        })
-    })
+    let connectionString = `mongodb://${HOST}:${PORT}/${DB}`
+    let client = await MongoClient.connect(connectionString, {useNewUrlParser: true})
+    this.db = client.db()
+    for (let collectionName of MONGO_REQUIRED_COLLECTIONS) {
+        let collection = await this.db.collection(collectionName)
+        if (collection) {
+            this.collections[collectionName] = collection
+        } else {
+            this.collections[collectionName] = await this.db.createCollection(collectionName)
+        }
+    }
+    this.ready = true
 }
 
-StorageInterface.prototype.getArticle = function (id) {
+StorageInterface.prototype.getArticle = async function (id) {
 
-    if (this.db) {
+    if (this.ready) {
 
         // get article
-        let dbEntry = this.collections.articles.findOne({$loki: id})
-        let article = {...dbEntry}
+        let queryId = validateId(id)
+        let article = await this.collections.articles.findOne({_id: queryId})
         
         // get lead image keywords
-        if (dbEntry.leadImage) {
-            article.leadImage = {...dbEntry.leadImage}
-            let keywords = this.getKeywords(dbEntry.leadImage.keywords)
+        if (article.leadImage) {
+            let keywords = await this.getKeywords(article.leadImage.keywords)
             article.leadImage.keywords = keywords
         }
 
         // get calais entities
-        let calais = this.getCalais(article.$loki)
+        let calais = await this.getCalais(id)
         if (calais) {
             article.calais = calais
         }
 
-        // remove unused parameters and return
-        delete article.meta
         return article
 
     } else {
-        return null
+        throw new Error('DB not initialised. Call StorageInterface.init() first')
     }
 }
 
-StorageInterface.prototype.getArticleIds = function (queryObject) {
-    if (this.db) {
+StorageInterface.prototype.getArticleIds = async function (queryObject) {
+    if (this.ready) {
         let query = queryObject || {}
-        let articles = this.collections.articles.find(query)
-        return articles.map(article => article.$loki)
+        let articles = await this.collections.articles.find(query)
+        return await articles.map(article => article._id.toString()).toArray()
+    } else {
+        throw new Error('DB not initialised. Call StorageInterface.init() first')
     }
-    return null
 }
 
-StorageInterface.prototype.getArticles = function (listOfIds) {
-    if (this.db) {
+StorageInterface.prototype.getArticles = async function (listOfIds) {
+    if (this.ready) {
         let articles = []
-        for (let id of listOfIds) {
-            articles.push(this.getArticle(id))
+        for (let id of objectIds) {
+            articles.push(await this.getArticle(id))
         }
         return articles
+    } else {
+        throw new Error('DB not initialised. Call StorageInterface.init() first')
     }
-    return null
 }
 
-StorageInterface.prototype.getCalais = function (forArticle) {
-    if (this.db) {
-        let dbCalais = this.collections.calais.findOne({forArticle: forArticle})
-        if (dbCalais) {
-            let calais = {...dbCalais}
-            delete calais.meta
-            delete calais.$loki
+StorageInterface.prototype.getCalais = async function (forArticle) {
+    if (this.ready) {
+        let queryId = forArticle
+        if (typeof queryId !== 'string') {
+            queryId = queryId.toString()
+        }
+        let calais = await this.collections.calais.findOne({forArticle: queryId})
+        if (calais) {
+            delete calais._id
             delete calais.forArticle
             return calais
+        } else {
+            return null
         }
-    }
-    return null
-}
-
-StorageInterface.prototype.getKeywords = function (listOfIds) {
-    if (this.db) {
-        let keywords = 
-            this.collections.keywords.find({"$loki": { "$in": listOfIds }})
-        let cleanKeywords = []
-        for (let dbKeyword of keywords) {
-            let kw = {...dbKeyword}
-            delete kw.meta
-            delete kw.$loki
-            cleanKeywords.push(kw)
-        }
-        return cleanKeywords
     } else {
-        return null
+        throw new Error('DB not initialised. Call StorageInterface.init() first')
     }
 }
 
-StorageInterface.prototype.customQuery = function (collectionName, queryObject) {
+StorageInterface.prototype.getKeywords = await function (listOfIds) {
+    if (this.ready) {
+        let objectIds = listOfIds.map(id => validateId(id))
+        let keywords = await this.collections.keywords
+            .find({_id: { $in: objectIds }})
+            .map(kw => {
+                delete kw._id
+                return kw
+            })
+            .toArray()
+        return keywords
+    } else {
+        throw new Error('DB not initialised. Call StorageInterface.init() first')
+    }
+}
 
-    if (this.db) {
+StorageInterface.prototype.customQuery = async function (collectionName, queryObject) {
+
+    if (this.ready) {
         let collection = this.collections[collectionName]
         if (collection) {
-            return collection.find(queryObject)
+            return await collection.find(queryObject).toArray()
+        } else {
+            throw new Error(`Collection "${collectionName}" does not exist`)
         }
+    } else {
+        throw new Error('DB not initialised. Call StorageInterface.init() first')
     }
-    return null
 }
 
 module.exports = StorageInterface
