@@ -1,17 +1,16 @@
 // Libraries
 const fs = require('fs')
+const path = require('path')
 const Minimist = require('minimist')
-const Loki = require('lokijs')
-const lfsa = require('../node_modules/lokijs/src/loki-fs-structured-adapter')
 
 // Modules
 const ArticlePreprocessor = require('../modules/preprocessor/pp-article')
 const KeywordsPreprocessor = require('../modules/preprocessor/pp-keywords')
 const Matcher = require('../modules/training/matcher')
+const Storage = require('./util/storage-interface')
 
 // Global config
 const APP_ROOT = require('app-root-path')
-const STORAGE_REQUIRED_COLLECTIONS = [ 'articles', 'keywords' ]
 const d = new Date()
 const dateString = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-`+
     `${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}`
@@ -26,7 +25,7 @@ const USAGE_STRING = `
 Usage of this script:
 
 yarn run generate || npm run generate
-    -s, --storage-path        (location of the storage file, required)
+    -h, --help                (show this help)
     -e, --export-path         (where to store the generated data, defaults to ./data/)
     -n, --normalize           (if present, values are normalized to the range [0,1])
     --tf                      (include termFrequency)
@@ -104,9 +103,9 @@ function termToCSV (kw, options) {
 
 // Read additional config from command line
 let argv = Minimist(process.argv.slice(2))
-let storageFilePath = argv['s'] || argv['storage-path']
-if (!storageFilePath) {
-    terminate('No storage path specified (use command line argument -s or --storage-path)\n' + USAGE_STRING, 9)
+if (argv['h'] || argv['help']) {
+    console.log(USAGE_STRING)
+    return
 }
 let exportPath = argv['e'] || argv['export-path'] || `${APP_ROOT}/data/`
 if (exportPath[exportPath.length - 1] !== '/') {
@@ -120,48 +119,26 @@ if (argv['ptype']) includeFields.push('ptype')
 let normalize = argv['n'] || argv['normalize'] || false
 
 console.log()
-console.log(`Reading data from file ${storageFilePath} ...`)
+//console.log(`Reading data from file ${storageFilePathAbsolute} ...`)
 console.log(`Exporting training data to ${exportPath} ...`)
 console.log(`Including fields: ${stringFromList(includeFields, ', ')}`)
 console.log()
 
-// Connect to database
-let adapter = new lfsa()
-let db = new Loki(storageFilePath, {
-    adapter: adapter
-})
-db.loadDatabase({}, async err => {
+let storage = new Storage()
+storage.init().then(async () => {
 
-    if (err) 
-        terminate(`Error loading database: ${err.message}`, 1)
-
-    let missingCollections = []
-    for (let collectionName of STORAGE_REQUIRED_COLLECTIONS) {
-        let collection = db.getCollection(collectionName)
-        if (!collection) {
-            missingCollections.push(collectionName)
-        }
-    }
-
-    if (missingCollections.length > 0) 
-        terminate(`Could not find required collection(s) ${missingCollections}`, 1)
-
-    console.log('DB loaded successfully\n')
-    
-    // Query DB
-    let articlesCollection = db.getCollection('articles')
-    let keywordsCollection = db.getCollection('keywords')
-    let articles = articlesCollection.find({gettyMeta: true})
+    let articleIds = await storage.getArticleIds({gettyMeta: true})
+    let articles = await storage.getArticles(articleIds)
 
     // Start processing
     console.log(`Writing to file ${exportPath}${EXPORT_FILENAME_TRAINING} ...`)
     let termsTotal = 0
-    for (let dbEntry of articles) {
-        let article = {...dbEntry}
-        article.leadImage = {...dbEntry.leadImage}
-        article.leadImage.keywords = 
-            keywordsCollection.find({"$loki": { "$in": dbEntry.leadImage.keywords }})
-        
+    let articlesTotal = articles.length
+    let articleIndex = 0
+    for (let article of articles) {
+
+        articleIndex++
+
         // Preprocess data
         let articlePreprocessor = new ArticlePreprocessor(article)
         let keywordsPreprocessor = new KeywordsPreprocessor(article.leadImage)
@@ -169,6 +146,7 @@ db.loadDatabase({}, async err => {
         await keywordsPreprocessor.preprocess()
         let matcher = new Matcher(articlePreprocessor.getProcessedTerms(), 
             keywordsPreprocessor.extendedKeywordList)
+        matcher.match()
         let keywords = matcher.getKeywordTerms()
         for (let kw of keywords) {
             articlePreprocessor.setKeyword(kw.stemmedTerm)
@@ -177,7 +155,7 @@ db.loadDatabase({}, async err => {
         // Create a CSV block of training data
         let flaggedTerms = articlePreprocessor.getProcessedTerms(null, true) // exclude stopwords
         termsTotal += flaggedTerms.length
-        console.log(`${article.$loki} - ${article.url} - ${flaggedTerms.filter(term => term.isKeyword).length} keywords`)
+        console.log(`(${articleIndex}/${articlesTotal}) - ${article._id} - ${article.url} - ${flaggedTerms.filter(term => term.isKeyword).length} keywords`)
         let trainingCsv = ''
         let testCsv = ''
         for (let index in flaggedTerms) {
@@ -201,5 +179,7 @@ db.loadDatabase({}, async err => {
     console.log()
     console.log(`Successfully processed ${termsTotal} terms`)
     console.log()
-    
+
+}).catch(error => {
+    terminate(error.message, 1)
 })
