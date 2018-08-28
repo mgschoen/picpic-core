@@ -8,6 +8,7 @@ const { calaisAggregator } = require('./calais')
 const { 
     concatStrings,
     filterStopwords,
+    mergeArrays,
     stemPlainText,
     tokenizePlainText,
     getNGrams,
@@ -105,8 +106,9 @@ function stemAndCombine (terms) {
         let combined = combinedTerms[stemmedTerm]
         if (combined) {
             combined.originalTerms.push(term)
-            combined.containingElements = 
-                [...combined.containingElements, ...original.containingElements]
+            combined.containingElements = mergeArrays(
+                combined.containingElements, 
+                original.containingElements)
             combined.pos = mergePOS(combined.pos, original.pos)
             combined.firstOccurrence = Math.min(combined.firstOccurrence, original.firstOccurrence)
             combined.termFrequency += original.containingElements.length

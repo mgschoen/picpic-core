@@ -169,6 +169,23 @@ function isStopword (term) {
     return Stopwords.indexOf(term.toLowerCase()) >= 0
 }
 
+/**
+ * Merges two arrays so that each value occurs
+ * only once in the resulting array
+ * @param {Array} a 
+ * @param {Array} b 
+ * @returns {Array}
+ */
+function mergeArrays (a, b) {
+    let merge = [...a]
+    for (let bElem of b) {
+        if (merge.indexOf(bElem) < 0) {
+            merge.push(bElem)
+        }
+    }
+    return merge
+}
+
 function objectToArray (object, keyForKey) {
     let array = []
     for (let key in object) {
@@ -211,6 +228,7 @@ module.exports = {
     getNextNLines,
     getNGrams,
     isStopword,
+    mergeArrays,
     objectToArray,
     roundToDecimals,
     stemPlainText,

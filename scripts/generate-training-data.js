@@ -1,6 +1,5 @@
 // Libraries
 const fs = require('fs')
-const path = require('path')
 const Minimist = require('minimist')
 
 // Modules
