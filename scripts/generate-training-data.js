@@ -31,7 +31,17 @@ yarn run generate || npm run generate
     --fo                      (include firstOccurrence)
     --ptype                   (include paragraphType)
     --pos                     (include POS)
+    --calais-entity           (include calais entity vector)
 `
+
+const KNOWN_CALAIS_ENTITIES = [ "Anniversary", "City", "Company", "Continent", "Country", 
+    "Editor", "EmailAddress", "EntertainmentAwardEvent", "Facility", "FaxNumber", "Holiday", 
+    "IndustryTerm", "Journalist", "MarketIndex", "MedicalCondition", "MedicalTreatment", 
+    "Movie", "MusicAlbum", "MusicGroup", "NaturalFeature", "OperatingSystem", "Organization", 
+    "Person", "PharmaceuticalDrug", "PhoneNumber", "PoliticalEvent", "Position", "Product", 
+    "ProgrammingLanguage", "ProvinceOrState", "PublishedMedium", "RadioProgram", 
+    "RadioStation", "Region", "SportsEvent", "SportsGame", "SportsLeague", "Technology", 
+    "TVShow", "TVStation", "URL"]
 
 /**
  * Concatenates a list of values to a string with
@@ -96,6 +106,20 @@ function termToCSV (kw, options) {
             `${normalize ? scaledSigmoid(kw.pos.adverbs.length) : kw.pos.adverbs.length},` + 
             `${normalize ? scaledSigmoid(kw.pos.rest.length) : kw.pos.rest.length},`     
     }
+    if (options.fields.indexOf('calais-entity') >= 0) {
+        // [ isCalaisEntity, ...KNOWN_CALAIS_ENTITIES, Other ]
+        let calaisVector = new Array(KNOWN_CALAIS_ENTITIES.length + 2).fill(0)
+        if (kw.calaisEntityType) {
+            calaisVector[0] = 1
+            let entityTypeIndex = KNOWN_CALAIS_ENTITIES.indexOf(kw.calaisEntityType)
+            if (entityTypeIndex < 0) {
+                calaisVector[calaisVector.length - 1] = 1
+            } else {
+                calaisVector[entityTypeIndex+1] = 1
+            }
+        }
+        csvString += `${calaisVector.toString()},`
+    }
     csvString += `${isKeyword}\n`
     return csvString
 }
@@ -115,6 +139,7 @@ if (argv['tf']) includeFields.push('tf')
 if (argv['fo']) includeFields.push('fo')
 if (argv['pos']) includeFields.push('pos')
 if (argv['ptype']) includeFields.push('ptype')
+if (argv['calais-entity']) includeFields.push('calais-entity')
 let normalize = argv['n'] || argv['normalize'] || false
 
 console.log()

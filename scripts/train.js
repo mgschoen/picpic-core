@@ -5,7 +5,7 @@ const fs = require('fs')
 const SVMClassifier = require('../modules/search-term-extraction/svm-classifier')
 const FFNNClassifier = require('../modules/search-term-extraction/ffnn-classifier')
 const Benchmark = require('../modules/training/benchmark')
-const { terminate } = require('./script-util')
+const { terminate } = require('./util/script-util')
 const { getNextNLines } = require('../modules/util')
 const { selectTrainingData } = require('../modules/search-term-extraction/training-data-util')
 
