@@ -16,6 +16,7 @@ let articleID = argv._[0]
 let threshold = parseFloat(argv._[1]) || 0.5
 let modelType = argv['t'] || 'svm'
 let modelFile = argv['m']
+let calaisTagsOnly = (argv['c'] || argv['calais-only']) ? true : false
 if (Number.isNaN(parseInt(articleID))) {
     terminate(`The article ID you specified (${articleID}) is not valid.`)
 }
@@ -31,9 +32,9 @@ rest.get(`http://picpic-api.argonn.me/article/${articleID}/`, async (data, respo
 
     try {
         let searchTermExtractor = new LearningSearchTermExtractor(
-            modelType, modelFile, preprocessor.stemmedUniqueTerms, threshold
+            modelType, modelFile, preprocessor.getProcessedTerms(), threshold
         )
-        let query = searchTermExtractor.generateSearchTerm()
+        let query = searchTermExtractor.generateSearchTerm(calaisTagsOnly)
 
         let extractedKeywords = searchTermExtractor.getKeywords()
         let keywordStrings = extractedKeywords.map(kw => kw.originalTerms[0])

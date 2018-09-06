@@ -1,7 +1,8 @@
 const { 
+    arrayToObject,
     concatStrings,
     filterStopwords,
-    objectToArray 
+    tokenizePlainText 
 } = require('../util')
 
 /**
@@ -15,8 +16,8 @@ const {
 class SearchTermExtractor {
 
     constructor (stemmedUniqueTerms, keywordThreshold) {
-        this.termsDictionary = stemmedUniqueTerms
-        this.originalTerms = objectToArray(stemmedUniqueTerms, 'stemmedTerm')
+        this.termsDictionary = arrayToObject(stemmedUniqueTerms, 'stemmedTerm')
+        this.originalTerms = stemmedUniqueTerms
         this.keywordThreshold = keywordThreshold
         this.filteredTerms = filterStopwords(this.originalTerms)
         this.termProbabilities = null
@@ -117,9 +118,24 @@ class SearchTermExtractor {
         return requestString.toLowerCase()
     }
 
-    generateSearchTerm () {
+    queryFromCalais () {
+        let calaisTerms = this.termProbabilities
+            .filter(term => term.calaisEntityType)
+            .sort((a, b) => b.p - a.p)
+        let firstTerm = calaisTerms[0].originalTerms[0]
+        let secondTerm = calaisTerms[1].originalTerms[0]
+        let query = firstTerm
+        if (tokenizePlainText(firstTerm).length < 2 && 
+            tokenizePlainText(secondTerm).length < 2) {
+                query += ` ${secondTerm}`
+        }
+        return query
+    }
+
+    generateSearchTerm (calaisEntitiesOnly) {
         this.termProbabilities = this.calculateProbabilities()
-        this.query = this.generateQuery()
+        this.query = calaisEntitiesOnly ? this.queryFromCalais() : this.generateQuery()
+        //this.query = this.queryFromCalais()
         return this.query
     }
 
