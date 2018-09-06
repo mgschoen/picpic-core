@@ -119,9 +119,7 @@ class SearchTermExtractor {
     }
 
     queryFromCalais () {
-        let calaisTerms = this.termProbabilities
-            .filter(term => term.calaisEntityType)
-            .sort((a, b) => b.p - a.p)
+        let calaisTerms = this.getCalaisTerms()
         let firstTerm = calaisTerms[0].originalTerms[0]
         let secondTerm = calaisTerms[1].originalTerms[0]
         let query = firstTerm
@@ -135,8 +133,20 @@ class SearchTermExtractor {
     generateSearchTerm (calaisEntitiesOnly) {
         this.termProbabilities = this.calculateProbabilities()
         this.query = calaisEntitiesOnly ? this.queryFromCalais() : this.generateQuery()
-        //this.query = this.queryFromCalais()
-        return this.query
+        let consideredTerms = calaisEntitiesOnly 
+            ? this.getCalaisTerms()
+            : this.getKeywords()
+        return {
+            termSet: calaisEntitiesOnly ? 'calais' : 'all',
+            query: this.query,
+            consideredTerms
+        }
+    }
+
+    getCalaisTerms () {
+        return this.termProbabilities
+            .filter(term => term.calaisEntityType)
+            .sort((a, b) => b.p - a.p)
     }
 
     getKeywords () {

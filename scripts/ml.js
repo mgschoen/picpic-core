@@ -34,9 +34,9 @@ rest.get(`http://picpic-api.argonn.me/article/${articleID}/`, async (data, respo
         let searchTermExtractor = new LearningSearchTermExtractor(
             modelType, modelFile, preprocessor.getProcessedTerms(), threshold
         )
-        let query = searchTermExtractor.generateSearchTerm(calaisTagsOnly)
+        let {query, consideredTerms} = searchTermExtractor.generateSearchTerm(calaisTagsOnly)
 
-        let extractedKeywords = searchTermExtractor.getKeywords()
+        let extractedKeywords = consideredTerms
         let keywordStrings = extractedKeywords.map(kw => kw.originalTerms[0])
         let numKeywords = extractedKeywords.length
         let termsTotal = searchTermExtractor.termProbabilities.length

@@ -27,10 +27,10 @@ rest.get(`http://picpic-api.argonn.me/article/${articleID}/`, async (data, respo
     await preprocessor.preprocess()
 
     let searchTermExtractor = new StatisticalSearchTermExtractor(
-        preprocessor.stemmedUniqueTerms, threshold)
-    let query = searchTermExtractor.generateSearchTerm()
+        preprocessor.getProcessedTerms(), threshold)
+    let {query, consideredTerms} = searchTermExtractor.generateSearchTerm()
 
-    let extractedKeywords = searchTermExtractor.getKeywords()
+    let extractedKeywords = consideredTerms
     let otherTerms = searchTermExtractor.getNonKeywords()
     let plot = new TermPlot('Selection plotted', otherTerms, extractedKeywords, {
         height: searchTermExtractor.maxTermFrequency + 2
