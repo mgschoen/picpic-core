@@ -1,6 +1,6 @@
 {
   "name": "picpic-core",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Automatically select images for news articles",
   "main": "main.js",
   "scripts": {
