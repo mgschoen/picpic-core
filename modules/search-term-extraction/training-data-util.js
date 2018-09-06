@@ -1,3 +1,5 @@
+const { CALAIS_ENTITY_CATEGORIES } = require('../../config/main.config')
+
 function scaledSigmoid (x) {
     return (1 - Math.exp(-x)) / (1 + Math.exp(-x))
 }
@@ -60,7 +62,34 @@ function selectTrainingData (features, labels, type, options) {
     return { trainingFeatures, trainingLabels }
 }
 
+function getEntityCategory (entityType) {
+    for (let category in CALAIS_ENTITY_CATEGORIES) {
+        if (CALAIS_ENTITY_CATEGORIES[category].indexOf(entityType) >= 0) {
+            return category
+        }
+    }
+    return 'Other'
+}
+
+function getCalaisVector (term) {
+    let categories = Object.keys(CALAIS_ENTITY_CATEGORIES)
+    // [ isCalaisEntity, ...CALAIS_ENTITY_CATEGORIES, Other ]
+    let calaisVector = new Array(categories.length + 2).fill(0)
+    if (term.calaisEntityType) {
+        calaisVector[0] = 1
+        let entityCategory = getEntityCategory(term.calaisEntityType)
+        let categoryIndex = categories.indexOf(entityCategory)
+        if (categoryIndex < 0) {
+            calaisVector[calaisVector.length - 1] = 1
+        } else {
+            calaisVector[categoryIndex+1] = 1
+        }
+    }
+    return calaisVector
+}
+
 module.exports = { 
+    getCalaisVector,
     scaledSigmoid,
     selectTrainingData
 }

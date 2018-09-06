@@ -1,7 +1,7 @@
 const Boxen = require('boxen')
 const Clui = require('clui')
 
-const { BOXEN_OPTIONS } = require('./print.config')
+const { BOXEN_OPTIONS } = require('../../config/main.config')
 
 const ValueList = function (title, values, options) {
     this.title = title

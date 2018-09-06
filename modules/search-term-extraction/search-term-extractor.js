@@ -130,8 +130,8 @@ class SearchTermExtractor {
         return query
     }
 
-    generateSearchTerm (calaisEntitiesOnly) {
-        this.termProbabilities = this.calculateProbabilities()
+    generateSearchTerm (calaisEntitiesOnly, featuresToConsider) {
+        this.termProbabilities = this.calculateProbabilities(featuresToConsider)
         this.query = calaisEntitiesOnly ? this.queryFromCalais() : this.generateQuery()
         let consideredTerms = calaisEntitiesOnly 
             ? this.getCalaisTerms()

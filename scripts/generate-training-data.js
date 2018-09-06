@@ -18,7 +18,8 @@ const EXPORT_FILENAME_TEST = `test.${dateString}.csv`
 
 const { countArrayElements } = require('../modules/util')
 const { terminate } = require('./util/script-util')
-const { scaledSigmoid } = require('../modules/search-term-extraction/training-data-util')
+const { getCalaisVector, scaledSigmoid } = 
+    require('../modules/search-term-extraction/training-data-util')
 
 const USAGE_STRING = `
 Usage of this script:
@@ -33,28 +34,6 @@ yarn run generate || npm run generate
     --pos                     (include POS)
     --calais-entity           (include calais entity vector)
 `
-
-const ENTITY_CATEGORIES = {
-    'Event': [ 'Anniversary', 'Date', 'EntertainmentAwardEvent', 'Holiday', 'PoliticalEvent', 
-        'SportsEvent', 'SportsGame', 'SportsLeague', 'TVShow' ],
-    'HumanProtagonist': [ 'Editor', 'Journalist', 'MusicGroup', 'Person' ],
-    'OrganizationProtagonist': [ 'Company', 'Organization' ],
-    'Position': [ 'Position' ],
-    'Location': [ 'City', 'Continent', 'Country', 'Facility', 'NaturalFeature', 'ProvinceOrState', 
-        'Region' ],
-    'Product': [ 'Movie', 'MusicAlbum', 'OperatingSystem', 'PharmaceuticalDrug', 'Product', 
-        'ProgrammingLanguage', 'PublishedMedium', 'RadioProgram', 'RadioStation', 'SportsLeague',
-        'Technology', 'TVShow', 'TVStation' ]
-}
-
-function getEntityCategory (entityType) {
-    for (let category in ENTITY_CATEGORIES) {
-        if (ENTITY_CATEGORIES[category].indexOf(entityType) >= 0) {
-            return category
-        }
-    }
-    return 'Other'
-}
 
 /**
  * Concatenates a list of values to a string with
@@ -120,19 +99,7 @@ function termToCSV (kw, options) {
             `${normalize ? scaledSigmoid(kw.pos.rest.length) : kw.pos.rest.length},`     
     }
     if (options.fields.indexOf('calais-entity') >= 0) {
-        let categories = Object.keys(ENTITY_CATEGORIES)
-        // [ isCalaisEntity, ...ENTITY_CATEGORIES, Other ]
-        let calaisVector = new Array(categories.length + 2).fill(0)
-        if (kw.calaisEntityType) {
-            calaisVector[0] = 1
-            let entityCategory = getEntityCategory(kw.calaisEntityType)
-            let categoryIndex = categories.indexOf(entityCategory)
-            if (categoryIndex < 0) {
-                calaisVector[calaisVector.length - 1] = 1
-            } else {
-                calaisVector[categoryIndex+1] = 1
-            }
-        }
+        let calaisVector = getCalaisVector(kw)
         csvString += `${calaisVector.toString()},`
     }
     csvString += `${isKeyword}\n`

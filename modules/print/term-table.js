@@ -2,7 +2,7 @@ const Table = require('cli-table')
 const Boxen = require('boxen')
 const Clui = require('clui')
 
-const { BOXEN_OPTIONS } = require('./print.config')
+const { BOXEN_OPTIONS } = require('../../config/main.config')
 const { concatStrings } = require('../util')
 
 const TermTable = function (data) {

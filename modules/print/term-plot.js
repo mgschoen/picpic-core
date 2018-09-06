@@ -2,7 +2,7 @@ const CliGraph = require('cli-graph')
 const CliColor = require('cli-color')
 const Boxen = require('boxen')
 
-const { BOXEN_OPTIONS } = require('./print.config')
+const { BOXEN_OPTIONS } = require('../../config/main.config')
 const charRegular = '\u{00B7}'
 const charKeyword = CliColor.green.bold('O')
 const captionX = 'first occurrence'

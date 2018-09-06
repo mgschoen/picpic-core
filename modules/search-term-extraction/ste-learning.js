@@ -5,6 +5,7 @@ const SVMClassifier = require('./svm-classifier')
 const FFNNClassifier = require('./ffnn-classifier')
 
 const { countArrayElements } = require('../util')
+const { getCalaisVector } = require('./training-data-util')
 
 class LearningSearchTermExtractor extends SearchTermExtractor {
 
@@ -26,7 +27,9 @@ class LearningSearchTermExtractor extends SearchTermExtractor {
         }
     }
 
-    calculateProbabilities () {
+    // Allowed values (and implicit order) for fields:
+    // tf, fo, ptype, pos, calais-entity
+    calculateProbabilities (features) {
         let predictionData = this.filteredTerms.map(term => {
             let countPtypes = countArrayElements(term.containingElements)
             let numH1 = countPtypes.H1 || 0
@@ -35,20 +38,40 @@ class LearningSearchTermExtractor extends SearchTermExtractor {
             let numLI = countPtypes.LI || 0
             let numOther = term.containingElements.length - numH1 - numH2 - numP - numLI
             let pos = term.pos
-            return [
-                term.termFrequency,
-                term.firstOccurrence,
-                numH1,
-                numH2,
-                numP,
-                numLI,
-                numOther,
-                pos.nouns.length,
-                pos.verbs.length,
-                pos.adjectives.length,
-                pos.adverbs.length,
-                pos.rest.length
-            ]
+            let vector = []
+            if (features.indexOf('tf') >= 0) {
+                vector.push(term.termFrequency)
+            }
+            if (features.indexOf('fo') >= 0) {
+                vector.push(term.firstOccurrence)
+            }
+            if (features.indexOf('ptype') >= 0) {
+                vector = [
+                    ...vector,
+                    numH1 ? 1 : 0,
+                    numH2 ? 1 : 0,
+                    numP ? 1 : 0,
+                    numLI ? 1 : 0,
+                    numOther ? 1 : 0
+                ]
+            }
+            if (features.indexOf('pos') >= 0) {
+                vector = [
+                    ...vector,
+                    pos.nouns.length ? 1 : 0,
+                    pos.verbs.length ? 1 : 0,
+                    pos.adjectives.length ? 1 : 0,
+                    pos.adverbs.length ? 1 : 0,
+                    pos.rest.length ? 1 : 0
+                ]
+            }
+            if (features.indexOf('calais-entity') >= 0) {
+                vector = [
+                    ...vector,
+                    ...getCalaisVector(term)
+                ]
+            }
+            return vector
         })
         let predictions = this.model.predict(predictionData)
         let termsWithProbabilities = predictions.map((p, index) => {
