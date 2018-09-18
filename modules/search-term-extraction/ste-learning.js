@@ -5,7 +5,7 @@ const SVMClassifier = require('./svm-classifier')
 const FFNNClassifier = require('./ffnn-classifier')
 
 const { countArrayElements } = require('../util')
-const { getCalaisVector } = require('./training-data-util')
+const { getCalaisVector, scaledSigmoid } = require('./training-data-util')
 
 class LearningSearchTermExtractor extends SearchTermExtractor {
 
@@ -29,7 +29,7 @@ class LearningSearchTermExtractor extends SearchTermExtractor {
 
     // Allowed values (and implicit order) for fields:
     // tf, fo, ptype, pos, calais-entity
-    calculateProbabilities (features) {
+    calculateProbabilities (features, normalize) {
         let predictionData = this.filteredTerms.map(term => {
             let countPtypes = countArrayElements(term.containingElements)
             let numH1 = countPtypes.H1 || 0
@@ -40,10 +40,10 @@ class LearningSearchTermExtractor extends SearchTermExtractor {
             let pos = term.pos
             let vector = []
             if (features.indexOf('tf') >= 0) {
-                vector.push(term.termFrequency)
+                vector.push(normalize ? scaledSigmoid(term.termFrequency) : term.termFrequency)
             }
             if (features.indexOf('fo') >= 0) {
-                vector.push(term.firstOccurrence)
+                vector.push(normalize ? scaledSigmoid(term.firstOccurrence) : term.firstOccurrence)
             }
             if (features.indexOf('ptype') >= 0) {
                 vector = [

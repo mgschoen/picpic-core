@@ -17,6 +17,7 @@ let threshold = parseFloat(argv._[1]) || 0.5
 let modelType = argv['t'] || 'svm'
 let modelFile = argv['m']
 let calaisTagsOnly = (argv['c'] || argv['calais-only']) ? true : false
+let normalizeFeatures = (argv['n'] || argv['normalize']) ? true : false
 if (Number.isNaN(parseInt(articleID))) {
     terminate(`The article ID you specified (${articleID}) is not valid.`)
 }
@@ -35,7 +36,10 @@ rest.get(`http://picpic-api.argonn.me/article/${articleID}/`, async (data, respo
             modelType, modelFile, preprocessor.getProcessedTerms(), threshold
         )
         let {query, consideredTerms} = 
-            searchTermExtractor.generateSearchTerm(calaisTagsOnly, ['tf', 'fo', 'calais-entity'])
+            searchTermExtractor.generateSearchTerm(
+                calaisTagsOnly, 
+                ['tf', 'fo', 'calais-entity'], 
+                normalizeFeatures)
 
         let extractedKeywords = consideredTerms
         let keywordStrings = extractedKeywords.map(kw => kw.originalTerms[0])
