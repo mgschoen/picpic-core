@@ -40,10 +40,10 @@ class LearningSearchTermExtractor extends SearchTermExtractor {
             let pos = term.pos
             let vector = []
             if (features.indexOf('tf') >= 0) {
-                vector.push(normalize ? scaledSigmoid(term.termFrequency) : term.termFrequency)
+                vector.push(normalize ? scaledSigmoid(term.termFrequency - 1) : term.termFrequency)
             }
             if (features.indexOf('fo') >= 0) {
-                vector.push(normalize ? scaledSigmoid(term.firstOccurrence) : term.firstOccurrence)
+                vector.push(term.firstOccurrence)
             }
             if (features.indexOf('ptype') >= 0) {
                 vector = [
