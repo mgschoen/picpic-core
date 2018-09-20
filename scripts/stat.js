@@ -27,7 +27,7 @@ rest.get(`http://picpic-api.argonn.me/article/${articleID}/`, async (data, respo
     await preprocessor.preprocess()
 
     let searchTermExtractor = new StatisticalSearchTermExtractor(
-        preprocessor.getProcessedTerms(), threshold)
+        preprocessor.getProcessedTerms(null, false, true), threshold)
     let {query, consideredTerms} = searchTermExtractor.generateSearchTerm()
 
     let extractedKeywords = consideredTerms

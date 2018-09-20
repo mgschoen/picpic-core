@@ -28,7 +28,7 @@ function assignParagraphTypes (paragraphs, fullText) {
         let ngrams = getNGrams(tokens, fullText, 2, 4)
         let terms = [...tokens, ...ngrams]
         for (let term of terms) {
-            if (allTerms[term] && !allTerms[term].containingElements.includes(p.type)) {
+            if (allTerms[term]) {
                 allTerms[term].containingElements.push(p.type)
             } else {
                 allTerms[term] = {
@@ -106,9 +106,8 @@ function stemAndCombine (terms) {
         let combined = combinedTerms[stemmedTerm]
         if (combined) {
             combined.originalTerms.push(term)
-            combined.containingElements = mergeArrays(
-                combined.containingElements, 
-                original.containingElements)
+            combined.containingElements =
+                [...combined.containingElements, ...original.containingElements]
             combined.pos = mergePOS(combined.pos, original.pos)
             combined.firstOccurrence = Math.min(combined.firstOccurrence, original.firstOccurrence)
             combined.termFrequency += original.containingElements.length
@@ -163,8 +162,10 @@ Preprocessor.prototype.preprocess = function () {
     })
 }
 
-Preprocessor.prototype.getProcessedTerms = function (sortFunction, excludeStopwords) {
-    let termOrigin = this.aggregatedTerms ? this.aggregatedTerms : this.stemmedUniqueTerms
+Preprocessor.prototype.getProcessedTerms = function (sortFunction, excludeStopwords, noAggregation) {
+    let termOrigin = (this.aggregatedTerms && !noAggregation) 
+        ? this.aggregatedTerms 
+        : this.stemmedUniqueTerms
     if (termOrigin) {
         let allTerms = []
         let resultTerms
