@@ -39,7 +39,8 @@ rest.get(`http://picpic-api.argonn.me/article/${articleID}/`, async (data, respo
             searchTermExtractor.generateSearchTerm(
                 calaisTagsOnly, 
                 ['tf', 'fo', 'calais-entity'], 
-                normalizeFeatures)
+                normalizeFeatures, 
+                true)
 
         let extractedKeywords = consideredTerms
         let keywordStrings = extractedKeywords.map(kw => kw.originalTerms[0])

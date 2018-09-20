@@ -76,26 +76,30 @@ class SearchTermExtractor {
      * discard the shorter term.
      * 6. Return the selected term(s) concatenated.
      */
-    generateQuery () {
+    generateQuery (ignoreSuperterms) {
         // 1. Get appropriate terms
         let keywords = this.getTermsWithThreshold(true)
         let mergedKeywords = []
 
-        // 3. + 4. Discard all subterms and put all superterms at the position of their first subterm
-        for (let i = 0; i < keywords.length; i++) {
-            let current = keywords[i]
-            let { stemmedTerm } = current
-            // iterate over remaining terms in search for parents
-            let searchForParent = SearchTermExtractor.largestParent(keywords.map(kw => kw.stemmedTerm), stemmedTerm, false)
-            let parent = searchForParent ? keywords[searchForParent.index] : null
-            // iterate over mergedKeywords in search for parents
-            let candidate = parent ? parent : current
-            let searchForMergedParent = SearchTermExtractor.largestParent(
-                mergedKeywords.map(kw => kw.stemmedTerm), 
-                candidate.stemmedTerm, 
-                true)
-            if (!searchForMergedParent) {
-                mergedKeywords.push(candidate)
+        if (ignoreSuperterms) {
+            mergedKeywords = keywords
+        } else {
+            // 3. + 4. Discard all subterms and put all superterms at the position of their first subterm
+            for (let i = 0; i < keywords.length; i++) {
+                let current = keywords[i]
+                let { stemmedTerm } = current
+                // iterate over remaining terms in search for parents
+                let searchForParent = SearchTermExtractor.largestParent(keywords.map(kw => kw.stemmedTerm), stemmedTerm, false)
+                let parent = searchForParent ? keywords[searchForParent.index] : null
+                // iterate over mergedKeywords in search for parents
+                let candidate = parent ? parent : current
+                let searchForMergedParent = SearchTermExtractor.largestParent(
+                    mergedKeywords.map(kw => kw.stemmedTerm), 
+                    candidate.stemmedTerm, 
+                    true)
+                if (!searchForMergedParent) {
+                    mergedKeywords.push(candidate)
+                }
             }
         }
 
@@ -130,9 +134,9 @@ class SearchTermExtractor {
         return query
     }
 
-    generateSearchTerm (calaisEntitiesOnly, featuresToConsider, normalize) {
+    generateSearchTerm (calaisEntitiesOnly, featuresToConsider, normalize, ignoreSuperterms) {
         this.termProbabilities = this.calculateProbabilities(featuresToConsider, normalize)
-        this.query = calaisEntitiesOnly ? this.queryFromCalais() : this.generateQuery()
+        this.query = calaisEntitiesOnly ? this.queryFromCalais() : this.generateQuery(ignoreSuperterms)
         let consideredTerms = calaisEntitiesOnly 
             ? this.getCalaisTerms()
             : this.getKeywords()
