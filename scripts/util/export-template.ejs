@@ -10,6 +10,7 @@
         </style>
     </head>
     <body>
+        <!-- Article content -->
         <h1><%= article.headline %></h1>
         <% for (let p of article.paragraphs) { %>
             <% if (p.type === 'P') { %>
@@ -24,6 +25,8 @@
         <% } %>
 
         <table>
+
+            <!-- Meta fields -->
             <tr>
                 <td>ID</td>
                 <td><%= _id %></td>
@@ -44,6 +47,8 @@
                 <td>Teaser headline</td>
                 <td><%= teaser.headline %></td>
             </tr>
+
+            <!-- Lead image -->
             <% if (locals.leadImage) { %>
             <tr>
                 <td>Lead image</td>
@@ -59,12 +64,31 @@
                 </td>
             </tr>
             <% } %>
+
+            <!-- Article images -->
             <% if (article.images.length > 0) { %>
             <tr>
                 <td>Article images</td>
                 <td>
                     <% for (let img of article.images) { %>
                         <p><a href="<%= img.src %>">[image]</a> (source: <%= img.copyright %>)</p>
+                    <% } %>
+                </td>
+            </tr>
+            <% } %>
+
+            <!-- Calais entities -->
+            <% if (locals.calais) { %>
+            <tr>
+                <td>Calais entities</td>
+                <td>
+                    <% for (let type in calais.entities) { %>
+                        <p>
+                            <b><%= type %>: </b>
+                            <% for (let entity of calais.entities[type]) { %>
+                                <%= entity.name %> |
+                            <% } %>
+                        </p>
                     <% } %>
                 </td>
             </tr>
