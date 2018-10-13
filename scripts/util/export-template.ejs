@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title><%= _id %> | <%= article.headline %></title>
+        <meta charset="utf-8">
+        <style>
+            table, tr, td {
+                border: 1px solid;
+            }
+        </style>
+    </head>
+    <body>
+        <h1><%= article.headline %></h1>
+        <% for (let p of article.paragraphs) { %>
+            <% if (p.type === 'P') { %>
+                <p><%= p.content %></p>
+            <% } %>
+            <% if (p.type === 'H2') { %>
+                <h2><%= p.content %></h2>
+            <% } %>
+            <% if (p.type === 'LI') { %>
+                <ul><li><%= p.content %></li></ul>
+            <% } %>
+        <% } %>
+
+        <table>
+            <tr>
+                <td>ID</td>
+                <td><%= _id %></td>
+            </tr>
+            <tr>
+                <td>Section</td>
+                <td><%= section %></td>
+            </tr>
+            <tr>
+                <td>Publish date</td>
+                <td><%= published %></td>
+            </tr>
+            <tr>
+                <td>Original URL</td>
+                <td><a href="https://www.bbc.com<%= url %>">https://www.bbc.com<%= url %></a></td>
+            </tr>
+            <tr>
+                <td>Teaser headline</td>
+                <td><%= teaser.headline %></td>
+            </tr>
+            <% if (locals.leadImage) { %>
+            <tr>
+                <td>Lead image</td>
+                <td>
+                    <p><b>Title: </b><%= leadImage.title %></p>
+                    <p><b>Caption: </b><%= leadImage.caption %></p>
+                    <p><b>Url: </b><a href="<%= leadImage.url %>"><%= leadImage.url %></a></p>
+                    <p><b>Keywords: </b>
+                        <% for (let kw of leadImage.keywords) { %>
+                            <%= kw.text %> |
+                        <% } %>
+                    </p>
+                </td>
+            </tr>
+            <% } %>
+            <% if (article.images.length > 0) { %>
+            <tr>
+                <td>Article images</td>
+                <td>
+                    <% for (let img of article.images) { %>
+                        <p><a href="<%= img.src %>">[image]</a> (source: <%= img.copyright %>)</p>
+                    <% } %>
+                </td>
+            </tr>
+            <% } %>
+        </table>
+    </body>
+</html>

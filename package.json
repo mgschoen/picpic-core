@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "benchmark": "node ./scripts/run-benchmark.js",
+    "export": "node ./scripts/export-corpus.js",
     "generate": "node ./scripts/generate-training-data.js",
     "inspect": "node ./scripts/inspect.js",
     "ml": "node ./scripts/ml.js",
@@ -22,6 +23,7 @@
     "cli-graph": "^3.2.2",
     "cli-table": "^0.3.1",
     "clui": "^0.3.6",
+    "ejs": "^2.6.1",
     "fuzzyset.js": "^0.0.7",
     "libsvm-js": "^0.2.1",
     "lokijs": "^1.5.5",
