@@ -107,7 +107,8 @@ class CalaisEntity {
             calaisEntityType: this.type,
             containingElements, 
             originalTerms,
-            pos
+            pos,
+            canonicalTerm: this.name
         }
     }
 }
