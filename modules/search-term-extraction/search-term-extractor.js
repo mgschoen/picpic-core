@@ -105,17 +105,18 @@ class SearchTermExtractor {
 
         // 2. Select the two query terms
         let requestKeywords = mergedKeywords.slice(0, 2)
-        let keywordsString = concatStrings(requestKeywords.map(kw => kw.originalTerms[0]), ' ')
+        let requestTerms = requestKeywords.map(kw => (kw.canonicalTerm || kw.originalTerms[0]))
+        let keywordsString = concatStrings(requestTerms, ' ')
         let requestString = keywordsString
         // 5. Shorten the query if neccessary
         if (keywordsString.split(' ').length > 3) {
-            let firstLength = requestKeywords[0] ? requestKeywords[0].originalTerms[0].split(' ').length : 0
-            let secondLength = requestKeywords[1] ? requestKeywords[1].originalTerms[0].split(' ').length : 0
+            let firstLength = requestTerms[0] ? requestTerms[0].split(' ').length : 0
+            let secondLength = requestTerms[1] ? requestTerms[1].split(' ').length : 0
             let diff = firstLength - secondLength
             if (diff < 0) {
-                requestString = requestKeywords[1].originalTerms[0]
-            } else if (diff > 0 || (diff == 0 && requestKeywords[0])) {
-                requestString = requestKeywords[0].originalTerms[0]
+                requestString = requestTerms[1]
+            } else if (diff > 0 || (diff == 0 && requestTerms[0])) {
+                requestString = requestTerms[0]
             }
         }
         // 6. Phew.
@@ -124,14 +125,16 @@ class SearchTermExtractor {
 
     queryFromCalais () {
         let calaisTerms = this.getCalaisTerms()
-        let firstTerm = calaisTerms[0].originalTerms[0]
-        let secondTerm = calaisTerms[1].originalTerms[0]
+        let firstTerm = calaisTerms[0].canonicalTerm
+            || calaisTerms[0].originalTerms[0]
+        let secondTerm = calaisTerms[1].canonicalTerm
+            || calaisTerms[1].originalTerms[0]
         let query = firstTerm
         if (tokenizePlainText(firstTerm).length < 2 && 
             tokenizePlainText(secondTerm).length < 2) {
                 query += ` ${secondTerm}`
         }
-        return query
+        return query.toLowerCase()
     }
 
     generateSearchTerm (calaisEntitiesOnly, featuresToConsider, normalize, ignoreSuperterms) {
